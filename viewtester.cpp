@@ -58,7 +58,11 @@ int main(int argc, char **argv) {
 			if (alwaysShowImage) ipengine.DISPLAY_IMAGE(image, "Find_region Results");
 		}
 		else if (strcmp(s, "find_perimeter") == 0) {
-
+			Mat find_perimeter_image;
+			find_perimeter_image = image.clone();		// for now assume image is result of find_region
+			ipengine.FIND_PERIMETER(image, find_perimeter_image);
+			image = find_perimeter_image;
+			if (alwaysShowImage) ipengine.DISPLAY_IMAGE(image, "Find_perimeter Results");
 		}
 		else if (strcmp(s, "toggle_display_mode") == 0){
 			alwaysShowImage = !alwaysShowImage;
