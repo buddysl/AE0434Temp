@@ -15,7 +15,7 @@ public:
 	CImageProcessingEngine();
 	~CImageProcessingEngine();
 
-	cv::Mat& FIND_REGION(cv::Mat &image, int x, int y);
+	void FIND_REGION(cv::Mat &srcimage, cv::Mat &dstimage, int x, int y);
 	cv::Mat& FIND_PERIMETER(cv::Mat &image, int x, int y);
 	void DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name);
 	void DISPLAY_PIXELS();
@@ -23,6 +23,8 @@ public:
 
 private:
 	void show_mat(const cv::Mat &image, std::string const &win_name);
+	
+	bool FIND_REGION_isSimilar(Vec3b *p1, Vec3b *p2);
 }; 
 
 #endif
