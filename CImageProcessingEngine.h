@@ -17,12 +17,12 @@ public:
 
 	cv::Mat& FIND_REGION(cv::Mat &image, int x, int y);
 	cv::Mat& FIND_PERIMETER(cv::Mat &image, int x, int y);
-	void DISPLAY_IMAGE();
+	void DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name);
 	void DISPLAY_PIXELS();
 	void SAVE_PIXELS();
 
 private:
-
+	void show_mat(const cv::Mat &image, std::string const &win_name);
 }; 
 
 #endif
