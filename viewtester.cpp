@@ -45,7 +45,8 @@ int main(int argc, char **argv) {
 				printf("No image data (warning: OpenCV recognize files by extensions)\n");
 				break;
 			}
-			Mat find_region_image(image);
+			Mat find_region_image;
+			find_region_image = image.clone();
 			ipengine.FIND_REGION(image, find_region_image, 1, 1);
 			ipengine.DISPLAY_IMAGE(find_region_image, "FIND REGION RESULTS");
 		}

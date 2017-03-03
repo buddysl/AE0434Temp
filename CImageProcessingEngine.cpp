@@ -19,17 +19,28 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, cv::Mat &dstimage, i
 	int channels = srcimage.channels();
 	int nRows = srcimage.rows;
 	int nCols = srcimage.cols;
-
 	int ii, jj;
 
-	std::vector<std::vector<int>> matCheck;
+
+	std::vector<std::vector<bool>> matCheck;
 	int stackSize = 0;
 	matCheck.clear();
 	matCheck.resize(nRows);
 	for (ii = 0; ii < nRows; ii++) matCheck[ii].resize(nCols);
 
-	std::vector<int>stackN(nRows, -1);
-	std::vector<int>stackM(nCols, -1);
+	// initialize
+	Vec3b *p;
+	for (ii = 0; ii < nRows; ii++)
+		for (jj = 0; jj < nCols; jj++) {
+			matCheck[ii][jj] = false;
+			p = dstimage.ptr<Vec3b>(ii, jj);
+			p->val[0] = 0;
+			p->val[1] = 0;
+			p->val[2] = 0;
+		}
+
+	std::vector<int>stackN(nRows*nCols, -1);
+	std::vector<int>stackM(nRows*nCols, -1);
 
 	switch (channels) {
 	case 1: //            gray scale image
@@ -47,12 +58,13 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, cv::Mat &dstimage, i
 			int cury = stackM[stackSize];
 			matCheck[curx][cury] = true;
 
-			Vec3b *p = dstimage.ptr<Vec3b>(curx, cury);
-			p[0] = 255;
-			p[1] = 255;
-			p[2] = 255;
+			p = dstimage.ptr<Vec3b>(curx, cury);
+	
+			p->val[0] = 255;
+			p->val[1] = 255;
+			p->val[2] = 255;
 
-			printf("x,y:%d,%d\n", curx, cury);
+			//printf("x,y:%d,%d\n", curx, cury);
 			Vec3b *p1 = srcimage.ptr<Vec3b>(curx, cury);
 			Vec3b *p2;
 			//int bNewNeighbour = false;
@@ -94,13 +106,6 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, cv::Mat &dstimage, i
 			}
 		}
 
-
-
-
-				//pdst[jj][0] = ~psrc[jj][0];
-				//pdst[jj][1] = ~psrc[jj][1];
-				//pdst[jj][2] = ~psrc[jj][2];
-
 		break;
 	default:
 		break;
@@ -139,11 +144,10 @@ void CImageProcessingEngine::show_mat(const cv::Mat &image, std::string const &w
 }
 
 bool CImageProcessingEngine::FIND_REGION_isSimilar(Vec3b *p1, Vec3b *p2) {
-	if (p1[0] == p2[0] && p1[1] == p2[1] && p1[2] == p2[2]) {
+	if (p1->val[0] == p2->val[0] && p1->val[1] == p2->val[1] && p1->val[2] == p2->val[2]) {
 		return true;
 	}
 	else {
 		return false;
 	}
-
 }
