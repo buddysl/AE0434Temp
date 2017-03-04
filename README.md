@@ -71,7 +71,7 @@ This class implements all of the above image analysis functions.  The following 
 * SAVE_PIXELS - a short function which calls openCV imwrite.
 
 
-### Command-line tool ###
+### 2) Command-line tool ###
 
 The command-line tool is implemented in viewtester.cpp.  
 
