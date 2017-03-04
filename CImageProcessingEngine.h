@@ -38,6 +38,13 @@ public:
 	/** Returns number of points in the results*/
 	int size();
 
+	/** Resize 2D matrix introduced to optimize speed of 'isPointInResults'.
+		Note: everytime 'resize' is called, all the data is cleared.  So do not resize in the middle of a FIND_ operation.
+		Future improvement: dynamically resize 2D matrix based on 'addPoint'
+
+	@param nRows - number of rows
+	@param nCols - number of columns
+	*/
 	void resize(int nRows,int nCols);
 	
 	/** Converts the results from the FIND_ operations to a black and white image.  
@@ -82,21 +89,36 @@ public:
 	@param y - y coordinate of main pixel
 	*/
 	void FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults, int width,int height);
+	
+	/** DISPLAY_IMAGE
+	@param image - source image
+	@param win_name - window name of display
+	*/
 	void DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name);
-	void DISPLAY_PIXELS(CFIND_Results &results, cv::Mat &image, std::string const &win_name);
+
+	/** DISPLAY_PIXELS
+	@param results - results from FIND_operation
+	@param image - image created from results
+	@param win_name - window name of display
+	*/
+	void DISPLAY_PIXELS(CFIND_Results &results, int nRows, int nCols, std::string const &win_name);
+
+	/** SAVE_PIXELS
+	@param image - source image
+	@param filename - filename
+	*/
 	void SAVE_PIXELS(const cv::Mat &image, cv::String filename);
 
 private:
-	void show_mat(const cv::Mat &image, std::string const &win_name);
-	void clear_image(cv::Mat &image);
 
-	void FIND_SetPixel(Vec3b *p);
-	void FIND_ClearPixel(Vec3b *p);
-	bool FIND_isPixelSet(Vec3b *p);
+	//void show_mat(const cv::Mat &image, std::string const &win_name);
+	//void clear_image(cv::Mat &image);
+
+	//void FIND_SetPixel(Vec3b *p);
+	//void FIND_ClearPixel(Vec3b *p);
+	//bool FIND_isPixelSet(Vec3b *p);
 	
-
 	bool FIND_REGION_isSimilar(Vec3b *p1, Vec3b *p2);
-	//void FIND_REGION_helper(Vec3b p,)
 
 
 }; 
