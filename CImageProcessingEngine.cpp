@@ -44,10 +44,13 @@ bool CFIND_Results::isPointInResults(cv::Point p) {
 	return (mat[p.x][p.y]>=0);
 }
 
-int CFIND_Results::size() {
+int CFIND_Results::numPoints() {
 	return results.size();
 }
 
+cv::Point CFIND_Results::size() {
+	return Point(mat.size(), mat[0].size());
+}
 // resize 2D matrix and perform a clear
 void CFIND_Results::resize(int nRows,int nCols) {
 	//mat.clear();
@@ -79,6 +82,27 @@ void CFIND_Results::convertToImage(cv::Mat &image) {
 	}
 	return;
 }
+
+
+bool CFIND_Results::loadFromImage(cv::Mat &image) {
+	resize(image.rows, image.cols);
+	Vec3b *p;
+	// clear image: make all pixels black
+	for (int ii = 0; ii < image.rows; ii++)
+		for (int jj = 0; jj < image.cols; jj++) {
+			p = image.ptr<Vec3b>(ii, jj);
+			if (p->val[0] == 0 && p->val[1] == 0 && p->val[2] == 0) {
+				addPoint(cv::Point(ii, jj));
+			}
+			else if (p->val[0] == 255 && p->val[1] == 255 && p->val[2] == 255) {
+			}
+			else {
+				// not a CFIND_Results image
+				return false;
+			}
+		}
+}
+
 
 void CFIND_Results::sortClocksise() {
 	int ii_origin = 0;
@@ -169,12 +193,14 @@ i) the pixel has a neighbour that is not similar (i.e., pixel not in the results
 ii) the pixel on the edge of the image (i.e., has a neighbour that is out of bounds).
 Note: based on above conditions, a perimeter pixel is one that has less than 8 similar neighbours.
 */
-void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults,int width, int height) {
+void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults) {
 	
-	perimeterResults.clear();
+	perimeterResults.resize(regionResults.size().x, regionResults.size().y);
+	int width = regionResults.size().x;
+	int height = regionResults.size().y;
 
 	int ii, jj;
-	for (int kk = 0; kk < regionResults.size(); kk++) { // loop through all pixels returned from FIND_REGION
+	for (int kk = 0; kk < regionResults.numPoints(); kk++) { // loop through all pixels returned from FIND_REGION
 		ii = regionResults.getPoint(kk).x;
 		jj = regionResults.getPoint(kk).y;
 
@@ -197,8 +223,8 @@ void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_
 
 
 void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
-	//smoothPerimeterResults.sortClocksise();
-	printf("Not implemented.\n");
+	perimeterResults.sortClocksise();
+	//printf("Not implemented.\n");
 }
 
 void CImageProcessingEngine::DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name) {
@@ -208,8 +234,8 @@ void CImageProcessingEngine::DISPLAY_IMAGE(const cv::Mat &image, std::string con
 }
 
 // Not working.
-void CImageProcessingEngine::DISPLAY_PIXELS(CFIND_Results &results, int nRows, int nCols, std::string const &win_name) {
-	Mat image(nRows,nCols, CV_8UC3, Scalar(0, 0, 0));
+void CImageProcessingEngine::DISPLAY_PIXELS(CFIND_Results &results, std::string const &win_name) {
+	Mat image(results.size().x,results.size().y, CV_8UC3, Scalar(0, 0, 0));
 
 	results.convertToImage(image);
 	namedWindow(win_name, WINDOW_AUTOSIZE);
@@ -218,7 +244,11 @@ void CImageProcessingEngine::DISPLAY_PIXELS(CFIND_Results &results, int nRows, i
 
 }
 
-void CImageProcessingEngine::SAVE_PIXELS(const cv::Mat &image,cv::String filename) {	
+void CImageProcessingEngine::SAVE_PIXELS(CFIND_Results &results, cv::String filename) {
+	Mat image(results.size().x, results.size().y, CV_8UC3, Scalar(0, 0, 0));
+
+	results.convertToImage(image);
+	
 	if (!image.data) {
 		return;
 	}

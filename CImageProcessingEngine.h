@@ -36,7 +36,9 @@ public:
 	bool isPointInResults(cv::Point p);
 
 	/** Returns number of points in the results*/
-	int size();
+	int numPoints();
+
+	cv::Point size();
 
 	/** Resize 2D matrix introduced to optimize speed of 'isPointInResults'.
 		Note: everytime 'resize' is called, all the data is cleared.  So do not resize in the middle of a FIND_ operation.
@@ -52,6 +54,9 @@ public:
 	@param image - black and white image
 	*/
 	void convertToImage(cv::Mat &image);
+
+
+	bool loadFromImage(cv::Mat &image);
 
 	void sortClocksise();
 	
@@ -90,7 +95,7 @@ public:
 	@param x - x coordinate of main pixel
 	@param y - y coordinate of main pixel
 	*/
-	void FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults, int width,int height);
+	void FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults);
 	
 
 	void FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults);
@@ -106,13 +111,13 @@ public:
 	@param image - image created from results
 	@param win_name - window name of display
 	*/
-	void DISPLAY_PIXELS(CFIND_Results &results, int nRows, int nCols, std::string const &win_name);
+	void DISPLAY_PIXELS(CFIND_Results &results, std::string const &win_name);
 
 	/** SAVE_PIXELS
 	@param image - source image
 	@param filename - filename
 	*/
-	void SAVE_PIXELS(const cv::Mat &image, cv::String filename);
+	void SAVE_PIXELS(CFIND_Results &results, cv::String filename);
 
 private:
 
