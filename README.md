@@ -7,17 +7,17 @@ Main objective of Part 1 of the exercise is to
 
 1) implement C++ class(es) to perform the following functions:
 
-	* FIND_REGION - accepts an RGB image, an (X, Y) pixel location, and other parameter(s) to control a greedy style algorithm that "flood fills" the nearby pixels in order to find a contiguous patch of pixels that are similar in color. The return value should be some representation of this set of pixels, to be passed to the functions below. Select a reasonable way to control how similar the pixels are; the idea is that regions that a human generally would see as visually similar should be found by your algorithm.
+* FIND_REGION - accepts an RGB image, an (X, Y) pixel location, and other parameter(s) to control a greedy style algorithm that "flood fills" the nearby pixels in order to find a contiguous patch of pixels that are similar in color. The return value should be some representation of this set of pixels, to be passed to the functions below. Select a reasonable way to control how similar the pixels are; the idea is that regions that a human generally would see as visually similar should be found by your algorithm.
 
-	* FIND_PERIMETER - accepts the output of FIND_REGION and outputs contiguous pixels that border the region. These pixels should be a subset of pixels returned by FIND_REGION.
+* FIND_PERIMETER - accepts the output of FIND_REGION and outputs contiguous pixels that border the region. These pixels should be a subset of pixels returned by FIND_REGION.
 
-	* DISPLAY_IMAGE - provides a method for displaying loaded RGB images.
+* DISPLAY_IMAGE - provides a method for displaying loaded RGB images.
 
-	* DISPLAY_PIXELS - provides a method for displaying an image representation of the results from the above FIND_* operators.
+* DISPLAY_PIXELS - provides a method for displaying an image representation of the results from the above FIND_* operators.
 
-	* SAVE_PIXELS - accepts the output from FIND_* and saves the image to a file.
+* SAVE_PIXELS - accepts the output from FIND_* and saves the image to a file.
 
-	and
+and
 	
 2) develop a command-line tool to test these functions.
 
@@ -28,15 +28,15 @@ Two classes are implemented and are provided in the CImageProcessingEngine.h/.cp
 
 i) class CFIND_Results
 
-	This class implements an object to capture the results from a FIND_ operation, which returns a list of	 pixel coordinates.
-	The class mainly uses a 1-D array to store the pixel coordinates, but also have a redundant 2-D matrix for quicker search performance (e.g., for FIND_PERIMETER function).
-	This class also provides the capability to convert the stored pixel coordinate information to image representation.  In particular, a black and white image is returned 
-	where white pixels denote the pixels returned by the FIND_ operation, and black otherwise.
+This class implements an object to capture the results from a FIND_ operation, which returns a list of	 pixel coordinates.
+The class mainly uses a 1-D array to store the pixel coordinates, but also have a redundant 2-D matrix for quicker search performance (e.g., for FIND_PERIMETER function).
+This class also provides the capability to convert the stored pixel coordinate information to image representation.  In particular, a black and white image is returned 
+where white pixels denote the pixels returned by the FIND_ operation, and black otherwise.
 
-	Note: there is currently a deficiency/inconvenience in the code due to the use of a static 2-D matrix.  In particular, the CFIND_Results object needs to be sized (using the 'resize' function)
-	to the image size prior to being passed to the FIND_ operation, and cannot be resized during the FIND_ operation.
-	
-	In the future, the code will be updated to dynamically resize the 2-D matrix as new pixel coordinates are added. 
+Note: there is currently a deficiency/inconvenience in the code due to the use of a static 2-D matrix.  In particular, the CFIND_Results object needs to be sized (using the 'resize' function)
+to the image size prior to being passed to the FIND_ operation, and cannot be resized during the FIND_ operation.
+
+In the future, the code will be updated to dynamically resize the 2-D matrix as new pixel coordinates are added. 
 
 ii) class CImageProcessingEngine
 
@@ -92,8 +92,6 @@ $ ./view
 	
 	Note: the program always has only one image in memory.  Loading another image will remove the previous image.
 	
-	Also, call a FIND_ command will replace the current image in memory with the image representation of the FIND_ results.
-
 	Bug report: the save command currently cannot save to the filename entered by the user, and will always default to 'output.png'
 	
 	
