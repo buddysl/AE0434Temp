@@ -15,8 +15,6 @@ using namespace cv;
 	find_region	- calls FIND_REGION on the current image in memory.  			
 	find_perimeter - calls FIND_PERIMETER on the current image in memory
 	
-	Note: calling the FIND_ commands will replace the current image in memory with the
-		 image representation of the FIND_ results.
 */
 
 int main(int argc, char **argv) {
@@ -48,6 +46,10 @@ int main(int argc, char **argv) {
 				printf("No image data (warning: OpenCV recognize files by extensions)\n");
 				continue;
 			}
+
+			regionResults.resize(image.rows, image.cols);	// need results object to be pre-sized to image size
+			perimeterResults.resize(image.rows, image.cols); // need results object to be pre-sized to image size
+
 			printf("Image loaded.  Size: %d x %d\n", image.rows, image.cols);
 			if(alwaysShowImage) {
 				printf("Press any key on image to continue...\n");
@@ -89,13 +91,11 @@ int main(int argc, char **argv) {
 				continue;
 			}
 
-			regionResults.resize(image.rows, image.cols);	// need results object to be pre-sized to image size
 			ipengine.FIND_REGION(image, regionResults, x, y);
-
+	
 			if (alwaysShowImage) {	
 				printf("Press any key on image to continue...\n");
 				ipengine.DISPLAY_PIXELS(regionResults, image.rows, image.cols, "Find_region Results");
-
 			}
 		}
 		else if (strcmp(s, "find_perimeter") == 0) {
@@ -103,7 +103,6 @@ int main(int argc, char **argv) {
 				printf("No image loaded.\n");
 				continue;
 			}
-			perimeterResults.resize(image.rows, image.cols); // bug: need results object to be pre-sized to image size
 			ipengine.FIND_PERIMETER(regionResults, perimeterResults,image.rows,image.cols);
 			if (alwaysShowImage) {
 				printf("Press any key on image to continue...\n");

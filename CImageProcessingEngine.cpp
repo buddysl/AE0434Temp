@@ -25,9 +25,14 @@ cv::Point CFIND_Results::getPoint(int ii) {
 
 void CFIND_Results::clear() {
 	results.clear();
-	for (int ii = 0; ii < mat.size(); ii++)
-		for (int jj = 0; jj < mat[ii].size(); jj++)
-			mat[ii][jj] = false;
+	int nRows = mat.size();
+	int nCols = mat[0].size();
+	//mat.clear();
+	//for (int ii = 0; ii < mat.size(); ii++)
+	//	for (int jj = 0; jj < mat[ii].size(); jj++)
+	//		mat[ii][jj] = false;
+	mat.resize(nRows, std::vector<bool>(nCols, false));
+
 }
 
 // Note: search through the main 'results' vector is slow.  Added 2D matrix.
@@ -45,10 +50,11 @@ int CFIND_Results::size() {
 
 // resize 2D matrix and perform a clear
 void CFIND_Results::resize(int nRows,int nCols) {
-	mat.clear();
-	mat.resize(nRows);
-	for (int ii = 0; ii < nRows; ii++) mat[ii].resize(nCols);
-	clear();
+	//mat.clear();
+	//mat.resize(nRows);
+	//for (int ii = 0; ii < nRows; ii++) mat[ii].resize(nCols,false);
+	mat.resize(nRows, std::vector<bool>(nCols, false));
+	results.clear();
 }
 
 // create black and white image based pixel list
@@ -62,7 +68,7 @@ void CFIND_Results::convertToImage(cv::Mat &image) {
 			p->val[1] = 0;
 			p->val[2] = 0;
 		}
-
+	
 	// make all pixels in list white
 	for (int ii = 0; ii < results.size(); ii++) {
 		//printf("(x,y)=(%d,%d)\n", results.at(ii).x, results.at(ii).y);
@@ -108,36 +114,21 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regio
 	int nRows = srcimage.rows;
 	int nCols = srcimage.cols;
 
-	// matCheck keeps track of which pixels have already been visited
-	std::vector<std::vector<bool>> matCheck;
-	
-	// resize and initialize matCheck
-	matCheck.clear();
-	matCheck.resize(nRows);
-	for (int ii = 0; ii < nRows; ii++) matCheck[ii].resize(nCols);
-
-	for (int ii = 0; ii < nRows; ii++)
-		for (int jj = 0; jj < nCols; jj++) {
-			matCheck[ii][jj] = false;
-		}
-
 	regionResults.clear();
 
 	// initialize stack variables
-	int stackSize = 0;
-	std::vector<int>stackN(nRows*nCols, -1);
-	std::vector<int>stackM(nRows*nCols, -1);
+	std::vector<cv::Point>stack;
+	stack.clear();
 
-	stackSize = 1;
-	stackN[0] = x;
-	stackM[0] = y;
-	while (stackSize > 0) {
-		stackSize -= 1; //pop
-		int curx = stackN[stackSize];
-		int cury = stackM[stackSize];
-		matCheck[curx][cury] = true;
-
-		regionResults.addPoint(Point(curx, cury));  // add current point
+//	int count = 0;
+	cv::Point p;
+	stack.push_back(Point(x, y));
+	while(!stack.empty()) {
+		p = stack.back();
+		stack.pop_back();
+		int curx = p.x;
+		int cury = p.y;
+		regionResults.addPoint(p);  // add current point
 
 		//printf("x,y:%d,%d\n", curx, cury);
 		Vec3b *p1 = srcimage.ptr<Vec3b>(curx, cury);
@@ -150,11 +141,9 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regio
 					|| cury + jj < 0 || cury + jj >= nCols) continue;	// skip if neighbour is out of bounds
 				
 				p2 = srcimage.ptr<Vec3b>(curx +ii, cury+jj);
-				if (FIND_REGION_isSimilar(p1, p2) && matCheck[curx +ii][cury+jj] == false) { // found new similar neighbour; add to stack 
-					matCheck[curx+ii][cury+jj] = true;
-					stackN[stackSize] = curx +ii;
-					stackM[stackSize] = cury+jj;
-					stackSize += 1;
+				if (FIND_REGION_isSimilar(p1, p2) && !regionResults.isPointInResults(Point(curx+ii,cury+jj))){
+
+					stack.push_back(Point(curx + ii, cury + jj));
 				}
 			}
 	}
@@ -171,10 +160,6 @@ Note: based on above conditions, a perimeter pixel is one that has less than 8 s
 void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults,int width, int height) {
 	
 	perimeterResults.clear();
-
-	
-	Vec3b *p;
-	Vec3b *p2;
 
 	int ii, jj;
 	for (int kk = 0; kk < regionResults.size(); kk++) { // loop through all pixels returned from FIND_REGION
