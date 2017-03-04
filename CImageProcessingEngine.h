@@ -32,8 +32,8 @@ public:
 	/** Clear the results */
 	void clear();
 	
-	/** Determine if a point is in the results*/
-	bool isPointInResults(cv::Point p);
+	/** Determine if a point is in the results.  Returns -1 if not found, otherwise returns an index.*/
+	int isPointInResults(cv::Point p);
 
 	/** Returns number of points in the results*/
 	int numPoints();
@@ -66,6 +66,9 @@ private:
 
 	/** 2D matrix to optimize the 'isPointInResults' */
 	std::vector<std::vector<int>> mat;
+
+	void convertVectorToImage(std::vector<cv::Point> v, cv::Mat &image);
+	void display_pixels(std::vector<cv::Point> v, std::string const &win_name);
 };
 
 

@@ -221,8 +221,7 @@ int main(int argc, char **argv) {
 			haveSmoothPerimeterResults = true;
 			if (alwaysShowImage) {
 				printf("Press any key on image to continue...\n");
-				ipengine.DISPLAY_PIXELS(smoothPerimeterResults, "Find_perimeter Results");
-
+				ipengine.DISPLAY_PIXELS(smoothPerimeterResults, "Find_smooth_perimeter Results");
 			}
 		}
 		//else if (strcmp(s, "toggle_display_mode") == 0){

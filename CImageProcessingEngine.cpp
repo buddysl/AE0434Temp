@@ -36,12 +36,13 @@ void CFIND_Results::clear() {
 }
 
 // Note: search through the main 'results' vector is slow.  Added 2D matrix.
-bool CFIND_Results::isPointInResults(cv::Point p) {
+int CFIND_Results::isPointInResults(cv::Point p) {
 	//for (int ii = 0; ii < results.size(); ii++) {
 	//	if (results.at(ii).x == p.x && results.at(ii).y == p.y)
 	//		return true;
 	//}
-	return (mat[p.x][p.y]>=0);
+	if (p.x < 0 || p.x >= mat.size() || p.y < 0 || p.y >= mat[0].size()) return -1;
+	return mat[p.x][p.y];
 }
 
 int CFIND_Results::numPoints() {
@@ -60,8 +61,7 @@ void CFIND_Results::resize(int nRows,int nCols) {
 	results.clear();
 }
 
-// create black and white image based pixel list
-void CFIND_Results::convertToImage(cv::Mat &image) {
+void CFIND_Results::convertVectorToImage(std::vector<cv::Point> v, cv::Mat &image) {
 	Vec3b *p;
 	// clear image: make all pixels black
 	for (int ii = 0; ii < image.rows; ii++)
@@ -71,16 +71,41 @@ void CFIND_Results::convertToImage(cv::Mat &image) {
 			p->val[1] = 0;
 			p->val[2] = 0;
 		}
-	
+
 	// make all pixels in list white
-	for (int ii = 0; ii < results.size(); ii++) {
+	for (int ii = 0; ii < v.size(); ii++) {
 		//printf("(x,y)=(%d,%d)\n", results.at(ii).x, results.at(ii).y);
-		p = image.ptr<Vec3b>(results.at(ii).x, results.at(ii).y);
+		p = image.ptr<Vec3b>(v.at(ii).x, v.at(ii).y);
 		p->val[0] = 255;
 		p->val[1] = 255;
 		p->val[2] = 255;
 	}
 	return;
+}
+
+// create black and white image based pixel list
+void CFIND_Results::convertToImage(cv::Mat &image) {
+	convertVectorToImage(results, image);
+	return;
+	//Vec3b *p;
+	//// clear image: make all pixels black
+	//for (int ii = 0; ii < image.rows; ii++)
+	//	for (int jj = 0; jj < image.cols; jj++) {
+	//		p = image.ptr<Vec3b>(ii, jj);
+	//		p->val[0] = 0;
+	//		p->val[1] = 0;
+	//		p->val[2] = 0;
+	//	}
+	//
+	//// make all pixels in list white
+	//for (int ii = 0; ii < results.size(); ii++) {
+	//	//printf("(x,y)=(%d,%d)\n", results.at(ii).x, results.at(ii).y);
+	//	p = image.ptr<Vec3b>(results.at(ii).x, results.at(ii).y);
+	//	p->val[0] = 255;
+	//	p->val[1] = 255;
+	//	p->val[2] = 255;
+	//}
+	//return;
 }
 
 
@@ -103,6 +128,16 @@ bool CFIND_Results::loadFromImage(cv::Mat &image) {
 		}
 }
 
+void CFIND_Results::display_pixels(std::vector<cv::Point> v, std::string const &win_name) {
+
+	Mat image(size().x, size().y, CV_8UC3, Scalar(0, 0, 0));
+
+	convertVectorToImage(v,image);
+	namedWindow(win_name, WINDOW_AUTOSIZE);
+	imshow(win_name, image);
+	waitKey(0);
+
+}
 
 void CFIND_Results::sortClocksise() {
 	int ii_origin = 0;
@@ -113,8 +148,32 @@ void CFIND_Results::sortClocksise() {
 			ii_origin = ii;
 	}
 	
+	std::vector<bool> check(results.size(), false);
+
 	std::vector<cv::Point>newResults;
 	newResults.push_back(results[ii_origin]);
+
+	//check[ii_origin] = true;
+
+	int count = results.size()-1;
+	while (count > 0) {
+		count--;
+		cv::Point curp = newResults.back();
+		for(int ii=-1;ii<=1;ii++)
+			for (int jj = -1; jj <= 1; jj++) {
+				cv::Point neighbourp = cv::Point(curp.x + ii, curp.y + jj);
+				if (isPointInResults(neighbourp)>=0) {
+					if (check[isPointInResults(neighbourp)] == false) {
+						newResults.push_back(neighbourp);
+						check[isPointInResults(neighbourp)] = true;
+					}
+					if (neighbourp.x == newResults[0].x && neighbourp.y == newResults[0].y) break;
+				}
+			}
+	}
+	printf("size of results, newresults: %d,%d", results.size(), newResults.size());
+	display_pixels(results, "CFIND_results: results");
+	display_pixels(newResults, "CFIND_results: new results");
 }
 
 CImageProcessingEngine::CImageProcessingEngine() {
@@ -177,7 +236,7 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regio
 					|| cury + jj < 0 || cury + jj >= nCols) continue;	// skip if neighbour is out of bounds
 				
 				p2 = srcimage.ptr<Vec3b>(curx +ii, cury+jj);
-				if (FIND_REGION_isSimilar(p1, p2) && !regionResults.isPointInResults(Point(curx+ii,cury+jj))){
+				if (FIND_REGION_isSimilar(p1, p2) && regionResults.isPointInResults(Point(curx+ii,cury+jj))<0){
 
 					stack.push_back(Point(curx + ii, cury + jj));
 				}
@@ -211,7 +270,7 @@ void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_
 				if (ii + ii2 < 0 || ii + ii2 >= width
 					|| jj + jj2 < 0 || jj + jj2 >= height) continue; // skip if neighbour is out of bound
 				
-				if (regionResults.isPointInResults(Point(ii + ii2, jj + jj2))) count++;  // found a similar neighbour
+				if (regionResults.isPointInResults(Point(ii + ii2, jj + jj2))>=0) count++;  // found a similar neighbour
 			}
 		}
 		if (count < 8) { // if less than 8 similar neighbours, then is a perimeter pixel
@@ -223,6 +282,7 @@ void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_
 
 
 void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
+	smoothPerimeterResults.resize(perimeterResults.size().x, perimeterResults.size().y);
 	perimeterResults.sortClocksise();
 	//printf("Not implemented.\n");
 }
