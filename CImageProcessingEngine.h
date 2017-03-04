@@ -68,7 +68,7 @@ private:
 	std::vector<std::vector<int>> mat;
 
 	void convertVectorToImage(std::vector<cv::Point> v, cv::Mat &image);
-	void display_pixels(std::vector<cv::Point> v, std::string const &win_name);
+	void display_pixels(std::vector<cv::Point> v, std::string const &win_name, cv::String const &filename);
 };
 
 

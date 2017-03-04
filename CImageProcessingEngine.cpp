@@ -15,8 +15,10 @@ CFIND_Results::~CFIND_Results() {
 
 // Every add point need to update main 'results' vector, and also 2D matrix
 void CFIND_Results::addPoint(cv::Point p) {
-	results.push_back(p);
-	mat[p.x][p.y] = results.size()-1;
+	if (isPointInResults(p) < 0) {
+		results.push_back(p);
+		mat[p.x][p.y] = results.size() - 1;
+	}
 }
 
 cv::Point CFIND_Results::getPoint(int ii) {
@@ -116,10 +118,10 @@ bool CFIND_Results::loadFromImage(cv::Mat &image) {
 	for (int ii = 0; ii < image.rows; ii++)
 		for (int jj = 0; jj < image.cols; jj++) {
 			p = image.ptr<Vec3b>(ii, jj);
-			if (p->val[0] == 0 && p->val[1] == 0 && p->val[2] == 0) {
+			if (p->val[0] == 255 && p->val[1] == 255 && p->val[2] == 255) {
 				addPoint(cv::Point(ii, jj));
 			}
-			else if (p->val[0] == 255 && p->val[1] == 255 && p->val[2] == 255) {
+			else if (p->val[0] == 0 && p->val[1] == 0 && p->val[2] == 0) {
 			}
 			else {
 				// not a CFIND_Results image
@@ -128,7 +130,7 @@ bool CFIND_Results::loadFromImage(cv::Mat &image) {
 		}
 }
 
-void CFIND_Results::display_pixels(std::vector<cv::Point> v, std::string const &win_name) {
+void CFIND_Results::display_pixels(std::vector<cv::Point> v, std::string const &win_name, cv::String const &filename) {
 
 	Mat image(size().x, size().y, CV_8UC3, Scalar(0, 0, 0));
 
@@ -137,9 +139,12 @@ void CFIND_Results::display_pixels(std::vector<cv::Point> v, std::string const &
 	imshow(win_name, image);
 	waitKey(0);
 
+	imwrite(filename, image);
+
 }
 
 void CFIND_Results::sortClocksise() {
+	
 	int ii_origin = 0;
 	for (int ii = 1 ; ii < results.size(); ii++) {
 		if (results[ii].x < results[ii_origin].x)
@@ -147,33 +152,67 @@ void CFIND_Results::sortClocksise() {
 		else if (results[ii].x == results[ii_origin].x && results[ii].y < results[ii_origin].y)
 			ii_origin = ii;
 	}
-	
+
+
+
 	std::vector<bool> check(results.size(), false);
 
 	std::vector<cv::Point>newResults;
+	newResults.clear();
+	//results.swap()
 	newResults.push_back(results[ii_origin]);
 
 	//check[ii_origin] = true;
 
 	int count = results.size()-1;
+	int count2 = 0;
 	while (count > 0) {
 		count--;
+
+		std::vector<cv::Point> idx(8);
+		idx[0] = cv::Point(0, -1);
+		idx[1] = cv::Point(1, 0);
+		idx[2] = cv::Point(0, +1);
+		idx[3] = cv::Point(-1, 0);
+		idx[4] = cv::Point(-1, -1);
+		idx[5] = cv::Point(1, -1);
+		idx[6] = cv::Point(1, +1);
+		idx[7] = cv::Point(-1, +1);
+		//idx[0] = cv::Point(-1, -1);
+		//idx[1] = cv::Point(0, -1);
+		//idx[2] = cv::Point(1, -1);
+		//idx[3] = cv::Point(1, 0);
+		//idx[4] = cv::Point(1, 1);
+		//idx[5] = cv::Point(0, 1);
+		//idx[6] = cv::Point(-1, 1);
+		//idx[7] = cv::Point(-1, 0);
+
 		cv::Point curp = newResults.back();
-		for(int ii=-1;ii<=1;ii++)
-			for (int jj = -1; jj <= 1; jj++) {
+		//for(int jj=-1;jj<=1;jj++)
+		//	for (int ii = -1; ii <= 1; ii++) {
+		int ii, jj;
+		for(int kk=0;kk<8;kk++){
+			ii = idx[kk].x;
+			jj = idx[kk].y;
+				if (ii == 0 && jj == 0) continue;
 				cv::Point neighbourp = cv::Point(curp.x + ii, curp.y + jj);
+				//printf("#%d:(%d,%d),(%d,%d)\n", count,curp.x, curp.y, curp.x + ii, curp.y + jj);
 				if (isPointInResults(neighbourp)>=0) {
 					if (check[isPointInResults(neighbourp)] == false) {
 						newResults.push_back(neighbourp);
 						check[isPointInResults(neighbourp)] = true;
+						break;
+						if (neighbourp.x == newResults[0].x && neighbourp.y == newResults[0].y) {
+							printf("break\n");
+							break;
+						}
 					}
-					if (neighbourp.x == newResults[0].x && neighbourp.y == newResults[0].y) break;
 				}
-			}
+		}
 	}
 	printf("size of results, newresults: %d,%d", results.size(), newResults.size());
-	display_pixels(results, "CFIND_results: results");
-	display_pixels(newResults, "CFIND_results: new results");
+	display_pixels(results, "CFIND_results: results","temp1.png");
+	display_pixels(newResults, "CFIND_results: new results","temp2.png");
 }
 
 CImageProcessingEngine::CImageProcessingEngine() {
@@ -229,18 +268,19 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regio
 		Vec3b *p1 = srcimage.ptr<Vec3b>(curx, cury);
 		Vec3b *p2;
 
-		for(int ii=-1;ii<=1;ii++)	// loop through surrounding neighbours
+		for (int ii = -1; ii <= 1; ii++) {	// loop through surrounding neighbours
 			for (int jj = -1; jj <= 1; jj++) {
 				if (ii == 0 && jj == 0) continue;	// skip if self (i.e., not neighbour)
 				if (curx + ii < 0 || curx + ii >= nRows
 					|| cury + jj < 0 || cury + jj >= nCols) continue;	// skip if neighbour is out of bounds
-				
-				p2 = srcimage.ptr<Vec3b>(curx +ii, cury+jj);
-				if (FIND_REGION_isSimilar(p1, p2) && regionResults.isPointInResults(Point(curx+ii,cury+jj))<0){
+
+				p2 = srcimage.ptr<Vec3b>(curx + ii, cury + jj);
+				if (FIND_REGION_isSimilar(p1, p2) && regionResults.isPointInResults(Point(curx + ii, cury + jj)) < 0) {
 
 					stack.push_back(Point(curx + ii, cury + jj));
 				}
 			}
+		}
 	}
 }
 
