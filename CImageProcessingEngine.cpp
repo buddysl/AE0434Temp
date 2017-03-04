@@ -16,7 +16,7 @@ CFIND_Results::~CFIND_Results() {
 // Every add point need to update main 'results' vector, and also 2D matrix
 void CFIND_Results::addPoint(cv::Point p) {
 	results.push_back(p);
-	mat[p.x][p.y] = true;
+	mat[p.x][p.y] = results.size()-1;
 }
 
 cv::Point CFIND_Results::getPoint(int ii) {
@@ -31,7 +31,7 @@ void CFIND_Results::clear() {
 	//for (int ii = 0; ii < mat.size(); ii++)
 	//	for (int jj = 0; jj < mat[ii].size(); jj++)
 	//		mat[ii][jj] = false;
-	mat.resize(nRows, std::vector<bool>(nCols, false));
+	mat.resize(nRows, std::vector<int>(nCols, -1));
 
 }
 
@@ -41,7 +41,7 @@ bool CFIND_Results::isPointInResults(cv::Point p) {
 	//	if (results.at(ii).x == p.x && results.at(ii).y == p.y)
 	//		return true;
 	//}
-	return mat[p.x][p.y];
+	return (mat[p.x][p.y]>=0);
 }
 
 int CFIND_Results::size() {
@@ -53,7 +53,7 @@ void CFIND_Results::resize(int nRows,int nCols) {
 	//mat.clear();
 	//mat.resize(nRows);
 	//for (int ii = 0; ii < nRows; ii++) mat[ii].resize(nCols,false);
-	mat.resize(nRows, std::vector<bool>(nCols, false));
+	mat.resize(nRows, std::vector<int>(nCols, -1));
 	results.clear();
 }
 
@@ -80,6 +80,18 @@ void CFIND_Results::convertToImage(cv::Mat &image) {
 	return;
 }
 
+void CFIND_Results::sortClocksise() {
+	int ii_origin = 0;
+	for (int ii = 1 ; ii < results.size(); ii++) {
+		if (results[ii].x < results[ii_origin].x)
+			ii_origin = ii;
+		else if (results[ii].x == results[ii_origin].x && results[ii].y < results[ii_origin].y)
+			ii_origin = ii;
+	}
+	
+	std::vector<cv::Point>newResults;
+	newResults.push_back(results[ii_origin]);
+}
 
 CImageProcessingEngine::CImageProcessingEngine() {
 
@@ -183,6 +195,11 @@ void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_
 	return;
 }
 
+
+void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
+	//smoothPerimeterResults.sortClocksise();
+	printf("Not implemented.\n");
+}
 
 void CImageProcessingEngine::DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name) {
 	namedWindow(win_name, WINDOW_AUTOSIZE);

@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 
 	CImageProcessingEngine ipengine;
 	Mat image;
-	CFIND_Results regionResults, perimeterResults;
+	CFIND_Results regionResults, perimeterResults, smoothPerimeterResults;
 
 	bool alwaysShowImage = true;
 
@@ -107,6 +107,18 @@ int main(int argc, char **argv) {
 			if (alwaysShowImage) {
 				printf("Press any key on image to continue...\n");
 				ipengine.DISPLAY_PIXELS(perimeterResults, image.rows, image.cols, "Find_perimeter Results");
+
+			}
+		}
+		else if (strcmp(s, "find_smooth_perimeter") == 0) {
+			if (!image.data) {
+				printf("No image loaded.\n");
+				continue;
+			}
+			ipengine.FIND_SMOOTH_PERIMETER(perimeterResults, smoothPerimeterResults);
+			if (alwaysShowImage) {
+				printf("Press any key on image to continue...\n");
+				ipengine.DISPLAY_PIXELS(smoothPerimeterResults, image.rows, image.cols, "Find_perimeter Results");
 
 			}
 		}

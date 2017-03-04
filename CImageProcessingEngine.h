@@ -52,13 +52,15 @@ public:
 	@param image - black and white image
 	*/
 	void convertToImage(cv::Mat &image);
+
+	void sortClocksise();
 	
 private:
 	/** array storing the pixels returned by FIND_*/
 	std::vector<cv::Point> results;
 
 	/** 2D matrix to optimize the 'isPointInResults' */
-	std::vector<std::vector<bool>> mat;
+	std::vector<std::vector<int>> mat;
 };
 
 
@@ -90,6 +92,9 @@ public:
 	*/
 	void FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults, int width,int height);
 	
+
+	void FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults);
+
 	/** DISPLAY_IMAGE
 	@param image - source image
 	@param win_name - window name of display
