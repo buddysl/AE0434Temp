@@ -143,7 +143,13 @@ void CFIND_Results::display_pixels(std::vector<cv::Point> v, std::string const &
 
 }
 
-void CFIND_Results::sortClocksise() {
+void CFIND_Results::copyTo(CFIND_Results &dst) {
+	dst.resize(mat.size(), mat[0].size());
+	for (int ii = 0; ii < results.size(); ii++)
+		dst.addPoint(results[ii]);
+}
+
+void CFIND_Results::sortAlongPath() {
 	
 	int ii_origin = 0;
 	for (int ii = 1 ; ii < results.size(); ii++) {
@@ -211,8 +217,9 @@ void CFIND_Results::sortClocksise() {
 		}
 	}
 	printf("size of results, newresults: %d,%d", results.size(), newResults.size());
-	display_pixels(results, "CFIND_results: results","temp1.png");
-	display_pixels(newResults, "CFIND_results: new results","temp2.png");
+	//display_pixels(results, "CFIND_results: results","temp1.png");
+	//display_pixels(newResults, "CFIND_results: new results","temp2.png");
+	results = newResults;
 }
 
 CImageProcessingEngine::CImageProcessingEngine() {
@@ -243,7 +250,7 @@ CImageProcessingEngine::~CImageProcessingEngine() {
 	Algorithm starts at (x,y) pixel, and expands to visits all 'similar' neighbours based on the function FIND_REGION_isSimilar.
 	Note: future improvement is to use function pointers to allow users to provide their own functions for 'similarity'
 */
-void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regionResults, int x, int y){
+void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regionResults, int x, int y) {
 
 	int nRows = srcimage.rows;
 	int nCols = srcimage.cols;
@@ -254,10 +261,10 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regio
 	std::vector<cv::Point>stack;
 	stack.clear();
 
-//	int count = 0;
+	//	int count = 0;
 	cv::Point p;
 	stack.push_back(Point(x, y));
-	while(!stack.empty()) {
+	while (!stack.empty()) {
 		p = stack.back();
 		stack.pop_back();
 		int curx = p.x;
@@ -286,14 +293,14 @@ void CImageProcessingEngine::FIND_REGION(cv::Mat &srcimage, CFIND_Results &regio
 
 
 /* FIND_PERIMETER
-Algorithm goes through all pixels returned from FIND_REGION.  For each pixel, check all surrounding neighbours, and flag the pixel as a 
-perimeter pixel if either 
+Algorithm goes through all pixels returned from FIND_REGION.  For each pixel, check all surrounding neighbours, and flag the pixel as a
+perimeter pixel if either
 i) the pixel has a neighbour that is not similar (i.e., pixel not in the results from FIND_REGION); and/or
 ii) the pixel on the edge of the image (i.e., has a neighbour that is out of bounds).
 Note: based on above conditions, a perimeter pixel is one that has less than 8 similar neighbours.
 */
 void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults) {
-	
+
 	perimeterResults.resize(regionResults.size().x, regionResults.size().y);
 	int width = regionResults.size().x;
 	int height = regionResults.size().y;
@@ -309,8 +316,8 @@ void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_
 				if (ii2 == 0 && jj2 == 0) continue;	// self, skip
 				if (ii + ii2 < 0 || ii + ii2 >= width
 					|| jj + jj2 < 0 || jj + jj2 >= height) continue; // skip if neighbour is out of bound
-				
-				if (regionResults.isPointInResults(Point(ii + ii2, jj + jj2))>=0) count++;  // found a similar neighbour
+
+				if (regionResults.isPointInResults(Point(ii + ii2, jj + jj2)) >= 0) count++;  // found a similar neighbour
 			}
 		}
 		if (count < 8) { // if less than 8 similar neighbours, then is a perimeter pixel
@@ -320,11 +327,44 @@ void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_
 	return;
 }
 
+double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_isAngleSmallerThan(cv::Point2d a, cv::Point2d b, double angle_threshold) {
+	return (a.x*b.x + a.y*b.y) / sqrt(pow(a.x, 2) + pow(a.y, 2)) / sqrt(pow(b.x, 2) + pow(b.y, 2)) > cos(angle_threshold);
+}
 
 void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
 	smoothPerimeterResults.resize(perimeterResults.size().x, perimeterResults.size().y);
-	perimeterResults.sortClocksise();
+	perimeterResults.sortAlongPath();
 	//printf("Not implemented.\n");
+	//perimeterResults.copyTo(smoothPerimeterResults);
+
+	std::vector<cv::Point> vertices;
+	vertices.clear();
+	vertices.push_back(perimeterResults.getPoint(0));
+	vertices.push_back(perimeterResults.getPoint(1));
+
+	for (int ii = 1; ii < perimeterResults.numPoints(); ii++) {
+		if (vertices.size() > 2) {
+			while (vertices.size() > 2 &&
+				FIND_SMOOTH_PERIMETER_isAngleSmallerThan(
+					Point2d(vertices[vertices.size() - 1].x - vertices[vertices.size() - 2].x,
+					vertices[vertices.size() - 1].y - vertices[vertices.size() - 2].y),
+					Point2d(perimeterResults.getPoint(ii).x - vertices[vertices.size() - 1].x,
+					perimeterResults.getPoint(ii).y - vertices[vertices.size() - 1].y),
+					45 * 3.14159265 / 180.0)
+				){
+				vertices.pop_back();
+			}
+			vertices.push_back(perimeterResults.getPoint(ii));
+		}
+		else {
+			vertices.push_back(perimeterResults.getPoint(ii));
+		}
+	}
+	printf("vertices size:%d\n", vertices.size());
+	smoothPerimeterResults.clear();
+	for (int ii = 0; ii < vertices.size(); ii++) {
+		smoothPerimeterResults.addPoint(vertices[ii]);
+	}
 }
 
 void CImageProcessingEngine::DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name) {
@@ -333,7 +373,7 @@ void CImageProcessingEngine::DISPLAY_IMAGE(const cv::Mat &image, std::string con
 	waitKey(0);
 }
 
-// Not working.
+// Not working (fixed)
 void CImageProcessingEngine::DISPLAY_PIXELS(CFIND_Results &results, std::string const &win_name) {
 	Mat image(results.size().x,results.size().y, CV_8UC3, Scalar(0, 0, 0));
 

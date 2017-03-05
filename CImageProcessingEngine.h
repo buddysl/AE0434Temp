@@ -58,7 +58,9 @@ public:
 
 	bool loadFromImage(cv::Mat &image);
 
-	void sortClocksise();
+	void sortAlongPath();
+
+	void copyTo(CFIND_Results &dst);
 	
 private:
 	/** array storing the pixels returned by FIND_*/
@@ -133,6 +135,7 @@ private:
 	
 	bool FIND_REGION_isSimilar(Vec3b *p1, Vec3b *p2);
 
+	double FIND_SMOOTH_PERIMETER_isAngleSmallerThan(cv::Point2d a, cv::Point2d b, double angle_threshold);
 
 }; 
 
