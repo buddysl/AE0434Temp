@@ -26,9 +26,11 @@ public:
 	*/
 	void addPoint(cv::Point p);
 
+	void removePoint(cv::Point p);
+
 	/** Get the ii-th point from the results.  Use int size() to determine number of points in the results */
 	cv::Point getPoint(int ii);
-	
+
 	/** Clear the results */
 	void clear();
 	
@@ -103,7 +105,8 @@ public:
 	void FIND_PERIMETER(CFIND_Results &regionResults, CFIND_Results &perimeterResults);
 	
 
-	void FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults);
+	//void FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults);
+	void FIND_SMOOTH_PERIMETER(CFIND_Results &regionResults, CFIND_Results &smoothPerimeterResults);
 
 	/** DISPLAY_IMAGE
 	@param image - source image
@@ -137,10 +140,14 @@ private:
 
 	double FIND_SMOOTH_PERIMETER_isAngleSmallerThan(cv::Point2d a, cv::Point2d b, double angle_threshold);
 	//double FIND_SMOOTH_PERIMETER_dataFittingCost(CFIND_Results &results, int i1, int i2);
-	double FIND_SMOOTH_PERIMETER_dataFittingCost(std::vector<cv::Point2d>data);
+	double FIND_SMOOTH_PERIMETER_dataFittingCost(std::vector<cv::Point2d>data, cv::Point2d c0, cv::Point2d c1, cv::Point2d c2, cv::Point2d c3);
 	double FIND_SMOOTH_PERIMETER_distanceToBezierCurve(cv::Point2d pi, cv::Point2d c0, cv::Point2d c1, cv::Point2d c2, cv::Point2d c3 );
 	double FIND_SMOOTH_PERIMETER_distance(cv::Point2d p1, cv::Point2d p2);
-	cv::Vec4d FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(std::vector<double> data);
+	cv::Vec4d FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting1D(std::vector<double> data);
+	std::vector<cv::Point2d> FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting2D(std::vector<cv::Point2d> data);
+
+	void FIND_SMOOTH_PERIMETER_cleanSmallArtifacts(CFIND_Results &regionResults, int threshold);
+	std::vector<cv::Point> FIND_SMOOTH_PERIMETER_findConvexHull(CFIND_Results &results);
 }; 
 
 #endif

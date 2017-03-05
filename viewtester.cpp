@@ -139,43 +139,43 @@ int main(int argc, char **argv) {
 			int pixelset = -1;
 			printf("Which set [0-find_region, 1-find_perimeter, 2-find_smooth_perimeter]: ");
 			scanf("%d", &pixelset);
-			
+
+			CFIND_Results* ptresults = nullptr;
+
 			switch (pixelset) {
 			case 0: 
 				if (!haveRegionResults) {
-					printf("No find_region results found.\n");
-					break;
+					printf("No find_region results found.\n"); break;
 				}
-				ipengine.SAVE_PIXELS(regionResults, "region.png"); //bug: cannot use filename read from user
-				printf("Saved.\n");
+				ptresults = &regionResults;
 				break;
 			case 1:
 				if (!havePerimeterResults) {
-					printf("No find_perimeter results found.\n");
-					break;
+					printf("No find_perimeter results found.\n"); break;
 				}
-				ipengine.SAVE_PIXELS(perimeterResults, "perimeter.png"); //bug: cannot use filename read from user
-				printf("Saved.\n");
+				ptresults = &perimeterResults;				
 				break;
 			case 2:
 				if (!haveSmoothPerimeterResults) {
-					printf("No find_smooth_perimeter results found.\n");
-					break;
+					printf("No find_smooth_perimeter results found.\n"); break;
 				}
-				ipengine.SAVE_PIXELS(smoothPerimeterResults, "smooth.png"); //bug: cannot use filename read from user
-				printf("Saved.\n");
+				ptresults = &smoothPerimeterResults;
 				break;
 			default: 
 				printf("Invalid selection.\n");
 				break;
 			}
+			if(!(ptresults==nullptr)){
+				printf("Enter filename: ");
+				scanf("%s", s);
 
-			//printf("Enter filename: ");
-			//scanf("%s", s);
+				cv::String filename;
+				filename = s;
 
-			//cv::String filename;
-			//ipengine.SAVE_PIXELS(image, "output.png"); //bug: cannot use filename read from user
-			//printf("Saved.\n");
+				ipengine.SAVE_PIXELS(*ptresults, s); //bug: cannot use filename read from user (fixed)
+				printf("Saved.\n");
+			}
+
 		}
 		else if (strcmp(s, "find_region") == 0) {
 			int x, y;
@@ -213,11 +213,11 @@ int main(int argc, char **argv) {
 			}
 		}
 		else if (strcmp(s, "find_smooth_perimeter") == 0) {
-			if (!havePerimeterResults) {
-				printf("No results from FIND_PERIMETER.  Please run find_perimeter, or load previous results.\n");
+			if (!haveRegionResults) {
+				printf("No results from FIND_REGION.  Please run find_region, or load previous results.\n");
 				continue;
 			}
-			ipengine.FIND_SMOOTH_PERIMETER(perimeterResults, smoothPerimeterResults);
+			ipengine.FIND_SMOOTH_PERIMETER(regionResults, smoothPerimeterResults);
 			haveSmoothPerimeterResults = true;
 			if (alwaysShowImage) {
 				printf("Press any key on image to continue...\n");

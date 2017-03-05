@@ -21,6 +21,23 @@ void CFIND_Results::addPoint(cv::Point p) {
 	}
 }
 
+// Remove point
+void CFIND_Results::removePoint(cv::Point p) {
+	int ii = isPointInResults(p);
+	if (ii < 0) return;
+
+	if (ii == results.size() - 1) {
+		mat[p.x][p.y] = -1; 
+		results.pop_back();		
+	}
+	else {
+		mat[p.x][p.y] = -1;
+		results[ii] = results.back();
+		mat[results[ii].x][results[ii].y] = ii;
+		results.pop_back();
+	}
+}
+
 cv::Point CFIND_Results::getPoint(int ii) {
 	return results.at(ii);
 }
@@ -28,8 +45,10 @@ cv::Point CFIND_Results::getPoint(int ii) {
 void CFIND_Results::clear() {
 	results.clear();
 	int nRows = mat.size();
+	if (nRows <= 0) return;
+
 	int nCols = mat[0].size();
-	//mat.clear();
+	mat.clear();
 	//for (int ii = 0; ii < mat.size(); ii++)
 	//	for (int jj = 0; jj < mat[ii].size(); jj++)
 	//		mat[ii][jj] = false;
@@ -353,32 +372,32 @@ double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_distanceToBezierCurve(cv::P
 }
 
 //double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_dataFittingCost(CFIND_Results &results, int i1, int i2) {
-double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_dataFittingCost(std::vector<cv::Point2d>data){
+double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_dataFittingCost(std::vector<cv::Point2d>data, cv::Point2d c0, cv::Point2d c1, cv::Point2d c2, cv::Point2d c3){
 	double cost = 0;
-	//cv::Point2d p1 = Point2d(results.getPoint(i1).x, results.getPoint(i1).y);
-	//cv::Point2d p2 = Point2d(results.getPoint(i2).x, results.getPoint(i2).y);
-	//cv::Point2d p3 = Point2d(results.getPoint(i3).x, results.getPoint(i3).y);
-	std::vector<double> datax;
-	std::vector<double> datay;
-	datax.clear();
-	datay.clear();
+
+	//std::vector<double> datax;
+	//std::vector<double> datay;
+	//datax.clear();
+	//datay.clear();
+
+	//for (int ii = 0; ii < data.size(); ii++) {
+	//	datax.push_back(data[ii].x);
+	//	datay.push_back(data[ii].y);
+	//}
+
+	//Vec4d cx = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(datax);
+	//Vec4d cy = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(datay);
 
 	for (int ii = 0; ii < data.size(); ii++) {
-		datax.push_back(data[ii].x);
-		datay.push_back(data[ii].y);
-	}
-
-	Vec4d cx = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(datax);
-	Vec4d cy = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(datay);
-
-	for (int ii = 0; ii < data.size(); ii++) {
-		double dist = FIND_SMOOTH_PERIMETER_distanceToBezierCurve(data[ii], Point2d(cx[0],cy[0]), Point2d(cx[1], cy[1]), Point2d(cx[2], cy[2]), Point2d(cx[3], cy[3]));
-		cost += dist*dist;
+		//double dist = FIND_SMOOTH_PERIMETER_distanceToBezierCurve(data[ii], Point2d(cx[0],cy[0]), Point2d(cx[1], cy[1]), Point2d(cx[2], cy[2]), Point2d(cx[3], cy[3]));
+		double dist = FIND_SMOOTH_PERIMETER_distanceToBezierCurve(data[ii], c0,c1,c2,c3);
+		//cost += dist*dist;
+		cost = max(cost, dist);
 	}
 	return cost;
 }
 
-cv::Vec4d CImageProcessingEngine::FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(std::vector<double> data){
+cv::Vec4d CImageProcessingEngine::FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting1D(std::vector<double> data){
 	Matx44d A;
 	Vec4d b;
 	std::vector<double> t;
@@ -465,6 +484,26 @@ cv::Vec4d CImageProcessingEngine::FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(
 	return c;
 }
 
+std::vector<cv::Point2d> CImageProcessingEngine::FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting2D(std::vector<cv::Point2d> data) {
+	std::vector<double> datax;
+	std::vector<double> datay;
+	datax.clear();
+	datay.clear();
+
+	for (int ii = 0; ii < data.size(); ii++) {
+		datax.push_back(data[ii].x);
+		datay.push_back(data[ii].y);
+	}
+
+	Vec4d cx = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting1D(datax);
+	Vec4d cy = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting1D(datay);
+	std::vector<cv::Point2d> c;
+	for (int ii = 0; ii < 4; ii++) {
+		c.push_back(Point2d(cx[ii], cy[ii]));
+	}
+	return c;
+}
+
 
 //void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
 //	smoothPerimeterResults.resize(perimeterResults.size().x, perimeterResults.size().y);
@@ -502,65 +541,238 @@ cv::Vec4d CImageProcessingEngine::FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(
 //	}
 //}
 
-void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
-	smoothPerimeterResults.resize(perimeterResults.size().x, perimeterResults.size().y);
-	perimeterResults.sortAlongPath();
-	//printf("Not implemented.\n");
-	//perimeterResults.copyTo(smoothPerimeterResults);
+//void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
+//	smoothPerimeterResults.resize(perimeterResults.size().x, perimeterResults.size().y);
+//	perimeterResults.sortAlongPath();
+//	//printf("Not implemented.\n");
+//	//perimeterResults.copyTo(smoothPerimeterResults);
+//
+//	double threshold = 100;
+//
+//	if (perimeterResults.numPoints() < 4) {
+//		perimeterResults.copyTo(smoothPerimeterResults);
+//		return;
+//	}
+//
+//		std::vector<cv::Point> vertices;
+//		vertices.clear();
+//		vertices.push_back(perimeterResults.getPoint(0));
+//		vertices.push_back(perimeterResults.getPoint(1));
+//	
+//		for (int ii = 1; ii < perimeterResults.numPoints(); ii++) {
+//			if (vertices.size() > 2) {
+//				while (vertices.size() > 2 &&
+//					FIND_SMOOTH_PERIMETER_isAngleSmallerThan(
+//						Point2d(vertices[vertices.size() - 1].x - vertices[vertices.size() - 2].x,
+//						vertices[vertices.size() - 1].y - vertices[vertices.size() - 2].y),
+//						Point2d(perimeterResults.getPoint(ii).x - vertices[vertices.size() - 1].x,
+//						perimeterResults.getPoint(ii).y - vertices[vertices.size() - 1].y),
+//						45 * 3.14159265 / 180.0)
+//					){
+//					vertices.pop_back();
+//				}
+//				vertices.push_back(perimeterResults.getPoint(ii));
+//			}
+//			else {
+//				vertices.push_back(perimeterResults.getPoint(ii));
+//			}
+//		}
+//
+//		printf("#1: vertices size:%d\n", vertices.size());
+//		perimeterResults.clear();
+//		for (int ii = 0; ii < vertices.size(); ii++) {
+//			perimeterResults.addPoint(vertices[ii]);
+//		}
+//
+//
+//	//std::vector<cv::Point> vertices;
+//	
+//	std::vector<cv::Point2d> c; 
+//	c.clear();
+//	std::vector<cv::Point2d> data;
+//	
+//	vertices.clear();
+//	vertices.push_back(perimeterResults.getPoint(0));
+//	vertices.push_back(perimeterResults.getPoint(1));
+//	vertices.push_back(perimeterResults.getPoint(2));
+//	int curPt = 3;
+//	while (curPt < perimeterResults.numPoints()) {
+//		printf("new loop\n");
+//		data.clear();
+//		data.push_back(vertices[vertices.size() - 3]);
+//		data.push_back(vertices[vertices.size() - 2]);
+//		data.push_back(vertices[vertices.size() - 1]);
+//		int cost;
+//		do {
+//			data.push_back(perimeterResults.getPoint(curPt++));
+//			printf("%d: fitting...",curPt);
+//			c = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting2D(data);
+//			printf("Cx:%f,%f,%f,%f\n", c[0].x, c[1].x, c[2].x, c[3].x);
+//			printf("Cy:%f,%f,%f,%f\n", c[0].y, c[1].y, c[2].y, c[3].y);
+//			printf("costing...");
+//			cost = FIND_SMOOTH_PERIMETER_dataFittingCost(data, c[0], c[1], c[2], c[3]);
+//			printf("vertices size:%d, data size:%d, cost:%f\n", vertices.size(), data.size(),cost);
+//		} while (curPt < perimeterResults.numPoints() && cost<threshold);
+//		vertices.pop_back();
+//		vertices.pop_back();
+//		vertices.push_back(c[1]);
+//		vertices.push_back(c[2]);
+//		vertices.push_back(c[3]);
+//	}
+//	
+//	printf("#2:vertices size:%d\n", vertices.size());
+//	smoothPerimeterResults.clear();
+//	for (int ii = 0; ii < vertices.size(); ii++) {
+//		smoothPerimeterResults.addPoint(vertices[ii]);
+//	}
+//
+//	//std::vector<double> tempx;
+//	//std::vector<double> tempy;
+//	//tempx.clear();
+//	//tempy.clear();
+//	//for (int ii = 0; ii < 20; ii++) {
+//	//	tempx.push_back(perimeterResults.getPoint(ii).x);
+//	//	tempy.push_back(perimeterResults.getPoint(ii).y);
+//	//}
+//	//printf("p1:(%f,%f)\n", tempx[0], tempy[0]);
+//	//printf("p2:(%f,%f)\n", tempx[19], tempy[19]);
+//	//Vec4d cx, cy;
+//	//cx = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(tempx);
+//	//printf("Cx:%f,%f,%f,%f\n", cx[0], cx[1], cx[2], cx[3]);
+//	//cy = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(tempy);
+//	//printf("Cy:%f,%f,%f,%f\n", cy[0], cy[1], cy[2], cy[3]);
+//
+//
+//	//std::vector<Point2d> temp;
+//	//temp.clear();
+//	//for (int ii = 0; ii < 20; ii++) {
+//	//	temp.push_back(perimeterResults.getPoint(ii));
+//	//}
+//	//double cost = FIND_SMOOTH_PERIMETER_dataFittingCost(temp);
+//	//printf("cost:%f\n", cost);
+//
+//	printf("test\n");
+//	data.clear();
+//	data.push_back(Point2d(0, 0));
+//	data.push_back(Point2d(0, 2));
+//	data.push_back(Point2d(0, 5));
+//	data.push_back(Point2d(0, 6));
+//	c = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting2D(data);
+//	printf("Cx:%f,%f,%f,%f\n", c[0].x, c[1].x, c[2].x, c[3].x);
+//	printf("Cy:%f,%f,%f,%f\n", c[0].y, c[1].y, c[2].y, c[3].y);
+//	
+//}
 
-	std::vector<cv::Point> vertices;
-	vertices.clear();
-	vertices.push_back(perimeterResults.getPoint(0));
-	vertices.push_back(perimeterResults.getPoint(1));
 
-	for (int ii = 1; ii < perimeterResults.numPoints(); ii++) {
-		if (vertices.size() > 2) {
-			while (vertices.size() > 2 &&
-				FIND_SMOOTH_PERIMETER_isAngleSmallerThan(
-					Point2d(vertices[vertices.size() - 1].x - vertices[vertices.size() - 2].x,
-						vertices[vertices.size() - 1].y - vertices[vertices.size() - 2].y),
-					Point2d(perimeterResults.getPoint(ii).x - vertices[vertices.size() - 1].x,
-						perimeterResults.getPoint(ii).y - vertices[vertices.size() - 1].y),
-					45 * 3.14159265 / 180.0)
-				) {
-				vertices.pop_back();
+bool FIND_SMOOTH_PERIMETER_sort_helper(cv::Point p1, cv::Point p2) {
+	if (p1.x == p2.x)
+		return p1.y > p2.y;
+	else
+		return p1.x < p2.x;
+}
+
+bool FIND_SMOOTH_PERIMETER_isCClockwise(cv::Point p1, cv::Point p2, cv::Point p3) {
+	return (p2.x - p1.x) * (p3.y - p1.y) >= (p2.y - p1.y) * (p3.x - p1.x);
+}
+
+void CImageProcessingEngine::FIND_SMOOTH_PERIMETER_cleanSmallArtifacts(CFIND_Results &regionResults, int threshold) {
+	Point p;
+	bool changedResults = true;
+	while (changedResults == true) {
+		changedResults = false;
+
+		for (int ii = 0; ii < regionResults.numPoints(); ii++) {
+			p = regionResults.getPoint(ii);
+
+			// count number of neighbours
+			int count = 0;
+			for (int ii2 = -1; ii2 <= 1; ii2++) { // check all surround 8 neighbours
+				for (int jj2 = -1; jj2 <= 1; jj2++) {
+					if (ii2 == 0 && jj2 == 0) continue;	// self, skip
+					if (p.x + ii2 < 0 || p.x + ii2 >= regionResults.size().x
+						|| p.y + jj2 < 0 || p.y + jj2 >= regionResults.size().y) continue; // skip if neighbour is out of bound
+
+					if (regionResults.isPointInResults(Point(p.x + ii2, p.y + jj2)) >= 0) count++;  // found a similar neighbour
+				}
 			}
-			vertices.push_back(perimeterResults.getPoint(ii));
+			if (count < threshold) { // less than  2 neighbours
+				regionResults.removePoint(p);
+				changedResults = true;
+			}
 		}
-		else {
-			vertices.push_back(perimeterResults.getPoint(ii));
+	}
+	//for(int ii=0;ii<100;ii++)
+	//regionResults.removePoint(Point(ii, ii));
+}
+
+
+std::vector<cv::Point> CImageProcessingEngine::FIND_SMOOTH_PERIMETER_findConvexHull(CFIND_Results &results) {
+	std::vector<cv::Point> resultpts;
+	resultpts.clear();
+	for (int ii = 0; ii < results.numPoints(); ii++)
+		resultpts.push_back(results.getPoint(ii));
+
+	sort(resultpts.begin(), resultpts.end(), FIND_SMOOTH_PERIMETER_sort_helper);
+
+	std::vector<cv::Point> hullpts;
+	hullpts.clear();
+	hullpts.push_back(resultpts[0]);
+	hullpts.push_back(resultpts[1]);
+	for (int ii = 2; ii < resultpts.size(); ii++) {
+		if (hullpts.size() > 2) {
+			while (hullpts.size()>=2 && FIND_SMOOTH_PERIMETER_isCClockwise(hullpts[hullpts.size() - 2], hullpts[hullpts.size() - 1], resultpts[ii])) {
+				hullpts.pop_back();
+			}
+			hullpts.push_back(resultpts[ii]);			
 		}
-	}
-	printf("vertices size:%d\n", vertices.size());
-	smoothPerimeterResults.clear();
-	for (int ii = 0; ii < vertices.size(); ii++) {
-		smoothPerimeterResults.addPoint(vertices[ii]);
+		else
+			hullpts.push_back(resultpts[ii]);
 	}
 
-	//std::vector<double> tempx;
-	//std::vector<double> tempy;
-	//tempx.clear();
-	//tempy.clear();
-	//for (int ii = 0; ii < 20; ii++) {
-	//	tempx.push_back(perimeterResults.getPoint(ii).x);
-	//	tempy.push_back(perimeterResults.getPoint(ii).y);
-	//}
-
-	//Vec4d cx, cy;
-	//cx = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(tempx);
-	//printf("Cx:%f,%f,%f,%f\n", cx[0], cx[1], cx[2], cx[3]);
-	//cy = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(tempy);
-	//printf("Cy:%f,%f,%f,%f\n", cy[0], cy[1], cy[2], cy[3]);
-
-	std::vector<Point2d> temp;
-	temp.clear();
-	for (int ii = 0; ii < 20; ii++) {
-		temp.push_back(perimeterResults.getPoint(ii));
+	int numUpperHullPt = hullpts.size();
+	for (int ii = resultpts.size() - 1; ii >= 0; ii--) {
+		while (hullpts.size() >= numUpperHullPt + 1 && FIND_SMOOTH_PERIMETER_isCClockwise(hullpts[hullpts.size() - 2], hullpts[hullpts.size() - 1], resultpts[ii]))
+			hullpts.pop_back();
+		hullpts.push_back(resultpts[ii]);
 	}
-	double cost = FIND_SMOOTH_PERIMETER_dataFittingCost(temp);
-	printf("cost:%f\n", cost);
+
+	//if (hullpts.back().x == hullpts[0].x && hullpts.back().y == hullpts[0].y) hullSize -= 1;
+	
+	return hullpts;
+}
+
+cv::Point CImageProcessingEngine::FIND_SMOOTH_PERIMETER_evaluateCardinal2D(Point p0, Point p1, Point p2, Point p3, double T, double u) {
 
 }
+
+
+void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &regionResults, CFIND_Results &smoothPerimeterResults) {
+	smoothPerimeterResults.resize(regionResults.size().x, regionResults.size().y);
+	CFIND_Results tempResults;
+	regionResults.copyTo(tempResults);
+
+	FIND_SMOOTH_PERIMETER_cleanSmallArtifacts(tempResults,2);
+
+	DISPLAY_PIXELS(tempResults, "Internal:smooth0");
+
+	CFIND_Results perimeterResults;
+	FIND_PERIMETER(tempResults, perimeterResults);
+
+	std::vector<cv::Point> convexHull = FIND_SMOOTH_PERIMETER_findConvexHull(perimeterResults);
+
+	//tempResults.copyTo(smoothPerimeterResults);
+	smoothPerimeterResults.clear();
+	for (int ii = 0; ii < convexHull.size(); ii++) {
+		smoothPerimeterResults.addPoint(convexHull[ii]);
+	}
+	
+	DISPLAY_PIXELS(perimeterResults, "Internal:smooth1");
+	DISPLAY_PIXELS(smoothPerimeterResults, "Internal:smooth2");
+}
+
+
+
+
 
 void CImageProcessingEngine::DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name) {
 	namedWindow(win_name, WINDOW_AUTOSIZE);
