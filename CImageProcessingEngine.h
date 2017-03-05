@@ -26,6 +26,8 @@ public:
 	*/
 	void addPoint(cv::Point p);
 
+	void addVectorOfPoints(std::vector<cv::Point> pts);
+
 	void removePoint(cv::Point p);
 
 	/** Get the ii-th point from the results.  Use int size() to determine number of points in the results */
@@ -148,6 +150,9 @@ private:
 
 	void FIND_SMOOTH_PERIMETER_cleanSmallArtifacts(CFIND_Results &regionResults, int threshold);
 	std::vector<cv::Point> FIND_SMOOTH_PERIMETER_findConvexHull(CFIND_Results &results);
+	cv::Point FIND_SMOOTH_PERIMETER_evaluateCardinal2D_oneSegment(Point p0, Point p1, Point p2, Point p3, double T, double u);
+	std::vector<cv::Point> FIND_SMOOTH_PERIMETER_evaluateCardinal2D_all(std::vector<cv::Point> vertices, double T,  int n);
+
 }; 
 
 #endif

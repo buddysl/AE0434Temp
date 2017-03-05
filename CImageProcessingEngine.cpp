@@ -15,9 +15,17 @@ CFIND_Results::~CFIND_Results() {
 
 // Every add point need to update main 'results' vector, and also 2D matrix
 void CFIND_Results::addPoint(cv::Point p) {
-	if (isPointInResults(p) < 0) {
+	int flag = isPointInResults(p);
+	if (flag < 0 && flag !=-2) {
 		results.push_back(p);
 		mat[p.x][p.y] = results.size() - 1;
+	}
+}
+
+void CFIND_Results::addVectorOfPoints(std::vector<cv::Point> pts) {
+	for (int ii = 0; ii < pts.size(); ii++) {
+		//printf("here ii=%d,(%d,%d)", ii, pts[ii].x, pts[ii].y);
+		addPoint(pts[ii]);
 	}
 }
 
@@ -62,7 +70,7 @@ int CFIND_Results::isPointInResults(cv::Point p) {
 	//	if (results.at(ii).x == p.x && results.at(ii).y == p.y)
 	//		return true;
 	//}
-	if (p.x < 0 || p.x >= mat.size() || p.y < 0 || p.y >= mat[0].size()) return -1;
+	if (p.x < 0 || p.x >= mat.size() || p.y < 0 || p.y >= mat[0].size()) return -2;
 	return mat[p.x][p.y];
 }
 
@@ -741,8 +749,72 @@ std::vector<cv::Point> CImageProcessingEngine::FIND_SMOOTH_PERIMETER_findConvexH
 	return hullpts;
 }
 
-cv::Point CImageProcessingEngine::FIND_SMOOTH_PERIMETER_evaluateCardinal2D(Point p0, Point p1, Point p2, Point p3, double T, double u) {
+cv::Point CImageProcessingEngine::FIND_SMOOTH_PERIMETER_evaluateCardinal2D_oneSegment(Point p0, Point p1, Point p2, Point p3, double T, double u) {
+	double s = (1 - T) / 2;
+	Matx44d MC;
+	MC(0,0) = -s;	MC(0,1) = 2-s;	MC(0,2) = s-2;		MC(0,3) = s;
+	MC(1,0) = 2*s;	MC(1,1) = s-3;	MC(1,2) = 3-2*s;	MC(1,3) = -s;
+	MC(2,0) = -s;	MC(2,1) = 0;	MC(2,2) = s;		MC(2,3) = 0;
+	MC(3,0) = 0;	MC(3,1) = 1;	MC(3,2) = 0;		MC(3,3) = 0;
 
+	Vec4d GHx, GHy;
+	GHx[0] = p0.x;	GHx[1] = p1.x;	GHx[2] = p2.x;	GHx[3] = p3.x;
+	
+	GHy[0] = p0.y;	GHy[1] = p1.y;	GHy[2] = p2.y;	GHy[3] = p3.y;
+
+	Vec4d U;
+	U[0] = u*u*u;	U[1] = u*u;		U[2] = u;		U[3] = 1;
+
+	double xt, yt;
+	
+	Vec4d MCGHx, MCGHy;
+
+	for (int ii = 0; ii < 4; ii++) {
+		MCGHx[ii] = 0;
+		MCGHy[ii] = 0;
+		for (int jj = 0; jj < 4; jj++) {
+			MCGHx[ii] += MC(ii,jj) * GHx[jj];
+			MCGHy[ii] += MC(ii,jj) * GHy[jj];
+		}
+	}
+
+	xt = 0;
+	yt = 0;
+	for (int ii = 0; ii < 4; ii++) {
+		xt += U[ii] * MCGHx[ii];
+		yt += U[ii] * MCGHy[ii];
+	}
+	return Point(xt, yt);
+}
+
+std::vector<cv::Point> CImageProcessingEngine::FIND_SMOOTH_PERIMETER_evaluateCardinal2D_all(std::vector<cv::Point> vertices, double T, int n) {
+	std::vector<cv::Point> spline;
+	cv::Point p0, p1, p2, p3;
+	cv::Point pspline;
+
+	std::vector<cv::Point> vertices2;
+	vertices2.push_back(vertices[0]);
+	for(int ii=0;ii<vertices.size();ii++) vertices2.push_back(vertices[ii]);
+	vertices2.push_back(vertices[0]);
+	vertices2.push_back(vertices[0]);
+	
+	spline.clear();
+	for (int ii = 0; ii < vertices2.size() - 3; ii++) {
+		p0 = vertices2[ii];
+		p1 = vertices2[ii+1];
+		p2 = vertices2[ii+2];
+		p3 = vertices2[ii+3];
+
+		pspline = FIND_SMOOTH_PERIMETER_evaluateCardinal2D_oneSegment(p0, p1, p2, p3,T,0);
+		spline.push_back(pspline);
+		for (int jj = 0; jj < n; jj++) {
+			double u = (double)jj / ((double)n - 1.0);
+			pspline = FIND_SMOOTH_PERIMETER_evaluateCardinal2D_oneSegment(p0, p1, p2, p3,T,u);
+			spline.push_back(pspline);
+		}
+	}
+
+	return spline;
 }
 
 
@@ -751,23 +823,32 @@ void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &regionResults,
 	CFIND_Results tempResults;
 	regionResults.copyTo(tempResults);
 
-	FIND_SMOOTH_PERIMETER_cleanSmallArtifacts(tempResults,2);
+	FIND_SMOOTH_PERIMETER_cleanSmallArtifacts(tempResults,3);
 
-	DISPLAY_PIXELS(tempResults, "Internal:smooth0");
+	DISPLAY_PIXELS(tempResults, "Internal:smooth");
 
 	CFIND_Results perimeterResults;
-	FIND_PERIMETER(tempResults, perimeterResults);
+	FIND_PERIMETER(tempResults, perimeterResults); 
+
+	CFIND_Results tempResults2, tempResults3;
+	tempResults2.resize(smoothPerimeterResults.size().x, smoothPerimeterResults.size().y);
+	tempResults3.resize(smoothPerimeterResults.size().x, smoothPerimeterResults.size().y);
 
 	std::vector<cv::Point> convexHull = FIND_SMOOTH_PERIMETER_findConvexHull(perimeterResults);
+	tempResults2.addVectorOfPoints(convexHull);
+	DISPLAY_PIXELS(tempResults2, "Internal:smooth 2");
+	
+	std::vector<cv::Point> spline = FIND_SMOOTH_PERIMETER_evaluateCardinal2D_all(convexHull, 0, 100);
+	tempResults3.addVectorOfPoints(spline);
+	DISPLAY_PIXELS(tempResults3, "Internal:smooth 3");
 
+	
 	//tempResults.copyTo(smoothPerimeterResults);
 	smoothPerimeterResults.clear();
-	for (int ii = 0; ii < convexHull.size(); ii++) {
-		smoothPerimeterResults.addPoint(convexHull[ii]);
-	}
+	smoothPerimeterResults.addVectorOfPoints(spline);
 	
-	DISPLAY_PIXELS(perimeterResults, "Internal:smooth1");
-	DISPLAY_PIXELS(smoothPerimeterResults, "Internal:smooth2");
+	//DISPLAY_PIXELS(perimeterResults, "Internal:smooth1");
+	//DISPLAY_PIXELS(smoothPerimeterResults, "Internal:smooth0");
 }
 
 
