@@ -9,12 +9,13 @@ using namespace cv;
 /*  Main command-line program.  Supported commands:
 
 	quit		- exit proram
-	load		- load image
+	load_image	- load image
+	load pixels	- load pixel file
 	show_image	- display image (calls DISPLAY_IMAGE)
 	save_pixels	- save current image (calls SAVE_IMAGE)
 	find_region	- calls FIND_REGION on the current image in memory.  			
-	find_perimeter - calls FIND_PERIMETER on the current image in memory
-	
+	find_perimeter - calls FIND_PERIMETER on the current 'region' results in memory
+	find_smooth_perimeter - calls FIND_SMOOTH_PERIMETER on the current 'region' results in memory
 */
 
 int main(int argc, char **argv) {
@@ -29,13 +30,17 @@ int main(int argc, char **argv) {
 	bool alwaysShowImage = true;
 	bool loadedImage = false,  haveRegionResults = false, havePerimeterResults = false, haveSmoothPerimeterResults = false;
 
+	// main loop
 	while (1 == 1) {
 		printf("Enter input: ");
 		scanf("%s", s);
 		if (strcmp(s, "quit") == 0) {
 			break;
 		}
-		else if (strcmp(s, "load_image") == 0) {		// load file
+
+		////////////////////
+		// load image file
+		else if (strcmp(s, "load_image") == 0) {		
 			printf("Enter filename: ");
 			scanf("%s", s);
 
@@ -58,7 +63,10 @@ int main(int argc, char **argv) {
 				ipengine.DISPLAY_IMAGE(image, "Initial image");
 			}
 		}
-		else if (strcmp(s, "load_pixels") == 0) {
+
+		////////////////////
+		// load pixel file
+		else if (strcmp(s, "load_pixels") == 0) {		
 			int pixelset = -1;
 			printf("Which set [0-find_region, 1-find_perimeter, 2-find_smooth_perimeter]: ");
 			scanf("%d", &pixelset);
@@ -127,7 +135,10 @@ int main(int argc, char **argv) {
 			}
 
 		}
-		else if (strcmp(s, "show_image") == 0) {	// display image
+
+		////////////////////
+		// display image
+		else if (strcmp(s, "show_image") == 0) {
 			if (!loadedImage)
 				printf("No image loaded.  Use load command.\n");
 			else{
@@ -135,6 +146,9 @@ int main(int argc, char **argv) {
 				ipengine.DISPLAY_IMAGE(image,"Current image");
 			}
 		}
+		
+		////////////////////
+		// save pixels to file
 		else if (strcmp(s, "save_pixels") == 0) {
 			int pixelset = -1;
 			printf("Which set [0-find_region, 1-find_perimeter, 2-find_smooth_perimeter]: ");
@@ -177,6 +191,9 @@ int main(int argc, char **argv) {
 			}
 
 		}
+
+		////////////////////
+		// FIND_REGION
 		else if (strcmp(s, "find_region") == 0) {
 			int x, y;
 
@@ -199,6 +216,9 @@ int main(int argc, char **argv) {
 				ipengine.DISPLAY_PIXELS(regionResults, "Find_region Results");
 			}
 		}
+
+		////////////////////
+		// FIND_PERIMETER
 		else if (strcmp(s, "find_perimeter") == 0) {
 			if (!haveRegionResults) {
 				printf("No results from FIND_REGION.  Please run find_region, or load previous results.\n");
@@ -212,6 +232,9 @@ int main(int argc, char **argv) {
 
 			}
 		}
+
+		////////////////////
+		// FIND_SMOOTH_PERIMETER
 		else if (strcmp(s, "find_smooth_perimeter") == 0) {
 			if (!haveRegionResults) {
 				printf("No results from FIND_REGION.  Please run find_region, or load previous results.\n");
