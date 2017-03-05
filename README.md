@@ -31,7 +31,7 @@ Main objective of Part II is to add an addition function to Part I:
 Submitted Solution
 -----------------------
 
-### 1) Code Description:
+### 1) Code Description
 
 Two classes are implemented and are provided in the CImageProcessingEngine.h/.cpp files:
 
@@ -52,7 +52,7 @@ to the image size prior to being passed to the FIND_ operation, and cannot be re
 
 This class implements all of the above FIND_ image analysis functions.  The following describes the algorithms behind the functions.
 
-* FIND_REGION - accepts an image and (x,y) coordinate, and returns a CFIND_Results object that stores all coordinates of pixels similar to the original (x,y) pixel.
+* __FIND_REGION__ - accepts an image and (x,y) coordinate, and returns a CFIND_Results object that stores all coordinates of pixels similar to the original (x,y) pixel.
 
 	The algorithm starts at (x,y) and visits its immediate neighbouring pixels.  If there is a neighbour that is 'similar' and hasn't been visited yet, then it is added to a local
 	stack.  The algorithm repeats until the stack is empty.
@@ -64,7 +64,7 @@ This class implements all of the above FIND_ image analysis functions.  The foll
 	Also, the similarity function is currently a private member in the class, but a future improvement can be made to pass function pointers to allow 
 	other user code to provide their own similarity functions.
 	
-* FIND_PERIMETER - accepts a CFIND_Results object (i.e., generated from FIND_REGION), and returns another CFIND_Results object which stores pixel coordinates of "perimeter pixels".
+* __FIND_PERIMETER__ - accepts a CFIND_Results object (i.e., generated from FIND_REGION), and returns another CFIND_Results object which stores pixel coordinates of "perimeter pixels".
 
 	The algorithm goes through each pixel in the CFIND_Results object, checks each pixel's surrounding neighbours, and flags a pixel as a 
 	perimeter pixel if either 
@@ -73,7 +73,7 @@ This class implements all of the above FIND_ image analysis functions.  The foll
 
 	ii) the pixel is on the edge of the image (i.e., has a neighbour that is out of bounds).
 	
-* FIND_SMOOTH_PERIMETER - similar to the FIND_PERIMETER, except the perimeter has been smooth.
+* __FIND_SMOOTH_PERIMETER__ - similar to the FIND_PERIMETER, except the perimeter has been smooth.
 
 	The algorithm performs the following steps to obtain a smooth contour around the FIND_REGION:
 	
@@ -94,16 +94,16 @@ This class implements all of the above FIND_ image analysis functions.  The foll
 	
 	Adapted method from https://www.mathworks.com/matlabcentral/fileexchange/7078-cardinal-spline--catmull-rom--spline.
 		
-* DISPLAY_IMAGE - a short function that calls openCV imshow.
+* __DISPLAY_IMAGE__ - a short function that calls openCV imshow.
 
-* DISPLAY_PIXELS - obtains an image presentation from CFIND_Results, and calls openCV imshow.
+* __DISPLAY_PIXELS__ - obtains an image presentation from CFIND_Results, and calls openCV imshow.
 
-* SAVE_PIXELS - obtains an image presentation from CFIND_Results, and calls openCV imwrite.
-
-
+* __SAVE_PIXELS__ - obtains an image presentation from CFIND_Results, and calls openCV imwrite.
 
 
-### 2) Command-line tool
+
+
+### 2) Command-line Tool
 
 The command-line tool is implemented in viewtester.cpp.  
 
@@ -129,7 +129,7 @@ $ ./view
 	Bug report (fixed): the save command currently cannot save to the filename entered by the user, and will always default to 'output.png'.
 	
 	
-### 3) Test results
+### 3) Test Results
 
 The following section demonstrates the results of the code.
 
@@ -156,7 +156,9 @@ The following section demonstrates the results of the code.
  ![alt text](/demo_results/test3_smooth_convex_hull.png?raw=true) ![alt text](/demo_results/test3_smooth_spline.png?raw=true)
 
 	
-	Note: there are still some noticeable small pixels not cleaned.  Bug report: need to either tweak threshold, or an alternative cleaning method.
+	Note: there are still some noticeable small pixels not cleaned.  
+	
+	Bug report: need to either tweak threshold, or use an alternative cleaning method.
 	
 	
 	
