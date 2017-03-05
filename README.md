@@ -79,20 +79,20 @@ This class implements all of the above FIND_ image analysis functions.  The foll
 	
 	i) Remove small artifacts (i.e., small pixels)
 		
-	- Algorithm goes through all the pixels returned from FIND_REGION, and for each pixel, counts the number of surrounding neighbours.  If fhe number of neighbors		
+	Algorithm goes through all the pixels returned from FIND_REGION, and for each pixel, counts the number of surrounding neighbours.  If fhe number of neighbors		
 		is less than some given threshold, then the pixel will be flagged as a 'small artifact' pixel and removed from FIND_REGION results.
 		
 	ii) Perform the FIND_PERIMETER to obtain the perimeter of FIND_REGION.
 	
 	iii) Find the smallest convex hull on the perimeter.
 			
-	- The algorithm first sorts the pixels and then traverses each pixel in a clockwise order. If a counter clockwise move is made, the algorithm backtracks 
+	The algorithm first sorts the pixels and then traverses each pixel in a clockwise order. If a counter clockwise move is made, the algorithm backtracks 
 		and one-by-one removes the previous pixels until there is no longer a the counter clockwise move.  
 			The algorithm first builds the upper hull, and then repeats for the lower hall.
 	
 	iv) Curve-fit the convex hull using splines.
 	
-	- Adapted method from https://www.mathworks.com/matlabcentral/fileexchange/7078-cardinal-spline--catmull-rom--spline.
+	Adapted method from https://www.mathworks.com/matlabcentral/fileexchange/7078-cardinal-spline--catmull-rom--spline.
 		
 * DISPLAY_IMAGE - a short function that calls openCV imshow.
 
