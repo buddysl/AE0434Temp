@@ -157,6 +157,20 @@ private:
 	//void show_mat(const Mat &image, std::string const &win_name);
 	//void clear_image(Mat &image);
 
+	
+	//***************************************
+	// FIND_REGION helper functions
+
+	// function used to determine if two pixels are similar or not.
+	bool FIND_REGION_isSimilar(Vec3b *p1, Vec3b *p2);
+
+
+	//***************************************
+	// FIND_PERIMETER helper functions
+
+
+
+	//***************************************
 	// FIND_SMOOTH_PERIMETER helper functions
 	
 	/** FIND_SMOOTH_PERIMETER_cleanSmallArtifacts - removes all pixels with less than 'threshold' number of neighbors.  

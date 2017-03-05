@@ -513,22 +513,26 @@ void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &regionResults,
 
 	FIND_SMOOTH_PERIMETER_cleanSmallArtifacts(tempResults,3);
 	//DISPLAY_PIXELS(tempResults, "Internal:smooth");
+	//SAVE_PIXELS(tempResults, "smooth_clean.png");
 
 	CFIND_Results perimeterResults;
 	FIND_PERIMETER(tempResults, perimeterResults); 
+	//SAVE_PIXELS(perimeterResults, "smooth_perimeter.png");
 
-	/*CFIND_Results tempResults2, tempResults3;
+
+	CFIND_Results tempResults2, tempResults3;
 	tempResults2.resize(smoothPerimeterResults.size().x, smoothPerimeterResults.size().y);
 	tempResults3.resize(smoothPerimeterResults.size().x, smoothPerimeterResults.size().y);
-*/
+
 	std::vector<Point> convexHull = FIND_SMOOTH_PERIMETER_findConvexHull(perimeterResults);
 	//tempResults2.addVectorOfPoints(convexHull);
 	//DISPLAY_PIXELS(tempResults2, "Internal:smooth 2");
+	//SAVE_PIXELS(tempResults2, "smooth_convex_hull.png");
 	
 	std::vector<Point> spline = FIND_SMOOTH_PERIMETER_evaluateCardinal2D_all(convexHull, 0, 100);
 	//tempResults3.addVectorOfPoints(spline);
 	//DISPLAY_PIXELS(tempResults3, "Internal:smooth 3");
-
+	//SAVE_PIXELS(tempResults3, "smooth_spline.png");
 	
 	// store the results
 	smoothPerimeterResults.clear();
