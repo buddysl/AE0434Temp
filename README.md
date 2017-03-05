@@ -145,14 +145,15 @@ The following section demonstrates the results of the code.
 
 	![alt text](/demo_results/test3_perimeter.png?raw=true)
 
-* Results of FIND_SMOOTH_PERIMETER
+* Results of FIND_SMOOTH_PERIMETER (images in order from left to right)
 
 	- Removed small artifacts
 	- Found perimeter:
 	- Found convex hull:
 	- Curve fitting:
 	
-	![alt text](/demo_results/test3_smooth_clean.png?raw=true) ![alt text](/demo_results/test3_smooth_perimeter.png?raw=true)![alt text](/demo_results/test3_smooth_convex_hull.png?raw=true)![alt text](/demo_results/test3_smooth_spline.png?raw=true)
+	![alt text](/demo_results/test3_smooth_clean.png?raw=true) ![alt text](/demo_results/test3_smooth_perimeter.png?raw=true) 
+ ![alt text](/demo_results/test3_smooth_convex_hull.png?raw=true) ![alt text](/demo_results/test3_smooth_spline.png?raw=true)
 
 	
 	Note: there are still some noticeable small pixels not cleaned.  Bug report: need to either tweak threshold, or an alternative cleaning method.
