@@ -136,7 +136,11 @@ private:
 	bool FIND_REGION_isSimilar(Vec3b *p1, Vec3b *p2);
 
 	double FIND_SMOOTH_PERIMETER_isAngleSmallerThan(cv::Point2d a, cv::Point2d b, double angle_threshold);
-
+	//double FIND_SMOOTH_PERIMETER_dataFittingCost(CFIND_Results &results, int i1, int i2);
+	double FIND_SMOOTH_PERIMETER_dataFittingCost(std::vector<cv::Point2d>data);
+	double FIND_SMOOTH_PERIMETER_distanceToBezierCurve(cv::Point2d pi, cv::Point2d c0, cv::Point2d c1, cv::Point2d c2, cv::Point2d c3 );
+	double FIND_SMOOTH_PERIMETER_distance(cv::Point2d p1, cv::Point2d p2);
+	cv::Vec4d FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(std::vector<double> data);
 }; 
 
 #endif

@@ -328,8 +328,179 @@ void CImageProcessingEngine::FIND_PERIMETER(CFIND_Results &regionResults, CFIND_
 }
 
 double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_isAngleSmallerThan(cv::Point2d a, cv::Point2d b, double angle_threshold) {
-	return (a.x*b.x + a.y*b.y) / sqrt(pow(a.x, 2) + pow(a.y, 2)) / sqrt(pow(b.x, 2) + pow(b.y, 2)) > cos(angle_threshold);
+	return (a.x*b.x + a.y*b.y) / sqrt(a.x*a.x + a.y*a.y) / sqrt(b.x*b.x + b.y*b.y) > cos(angle_threshold);
 }
+
+double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_distance(cv::Point2d p1, cv::Point2d p2) {
+	return sqrt((p1.x - p2.x)*(p1.x - p2.x) + (p1.y - p2.y)*(p1.y - p2.y));
+}
+
+double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_distanceToBezierCurve(cv::Point2d pi, cv::Point2d c0, cv::Point2d c1, cv::Point2d c2, cv::Point2d c3 ) {
+	int numStep = max(abs(c0.x-c3.x),abs(c0.y-c3.y))*10;
+
+	double dist = FIND_SMOOTH_PERIMETER_distance(pi,c0);
+	for (int ii = 1; ii <= numStep; ii++) {
+		double t = ii / numStep;
+		/*Point2d bezierPt((1 - t)*((1 - t)*p0.x + t*p1.x) + t*((1 - t)*p1.x + t*p2.x),
+						 (1 - t)*((1 - t)*p0.y + t*p1.y) + t*((1 - t)*p1.y + t*p2.y));*/
+		Point2d bezierPt(c0.x*pow(1-t,3) + 3*c1.x*t*pow(1-t,2) + 3*c2.x*t*t*(1-t) + c3.x*t*t*t,
+			c0.y*pow(1 - t, 3) + 3 * c1.y*t*pow(1 - t, 2) + 3*c2.y*t*t*(1 - t) + c3.y*t*t*t);
+		double tempDist = FIND_SMOOTH_PERIMETER_distance(pi, bezierPt);
+		if (tempDist < dist) dist = tempDist;
+	}
+	return dist;
+
+}
+
+//double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_dataFittingCost(CFIND_Results &results, int i1, int i2) {
+double CImageProcessingEngine::FIND_SMOOTH_PERIMETER_dataFittingCost(std::vector<cv::Point2d>data){
+	double cost = 0;
+	//cv::Point2d p1 = Point2d(results.getPoint(i1).x, results.getPoint(i1).y);
+	//cv::Point2d p2 = Point2d(results.getPoint(i2).x, results.getPoint(i2).y);
+	//cv::Point2d p3 = Point2d(results.getPoint(i3).x, results.getPoint(i3).y);
+	std::vector<double> datax;
+	std::vector<double> datay;
+	datax.clear();
+	datay.clear();
+
+	for (int ii = 0; ii < data.size(); ii++) {
+		datax.push_back(data[ii].x);
+		datay.push_back(data[ii].y);
+	}
+
+	Vec4d cx = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(datax);
+	Vec4d cy = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(datay);
+
+	for (int ii = 0; ii < data.size(); ii++) {
+		double dist = FIND_SMOOTH_PERIMETER_distanceToBezierCurve(data[ii], Point2d(cx[0],cy[0]), Point2d(cx[1], cy[1]), Point2d(cx[2], cy[2]), Point2d(cx[3], cy[3]));
+		cost += dist*dist;
+	}
+	return cost;
+}
+
+cv::Vec4d CImageProcessingEngine::FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(std::vector<double> data){
+	Matx44d A;
+	Vec4d b;
+	std::vector<double> t;
+
+	t.clear();
+	for (int ii = 0; ii < data.size(); ii++) t.push_back((double)ii / (data.size() - 1));
+
+	// assume data is sorted in order, which is true;
+	for (int ii = 0; ii < 4; ii++) {
+		for (int jj = 0; jj < 4; jj++) {
+			//A.at<double>(ii,jj) = 0;
+			A(ii,jj) = 0;
+		}
+		b[ii] = 0;
+	}
+
+	for (int ii = 0; ii < data.size(); ii++) {
+		//A.at<double>(0, 0) = A.at<double>(0, 0) + 2 * pow((t[ii] - 1), 6);
+		//A.at<double>(0, 1) = A.at<double>(0, 1) -6 * t[ii] * pow((t[ii] - 1), 5);
+		//A.at<double>(0, 2) = A.at<double>(0, 2) + 6 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		//A.at<double>(0, 3) = A.at<double>(0, 3) -2 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A.at<double>(1, 0) = A.at<double>(1, 0) -6 * t[ii] * pow((t[ii] - 1), 5);
+		//A.at<double>(1, 1) = A.at<double>(1, 1) + 18 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		//A.at<double>(1, 2) = A.at<double>(1, 2) -18 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A.at<double>(1, 3) = A.at<double>(1, 3) + 6 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		//A.at<double>(2, 0) = A.at<double>(2, 0) + 6 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		//A.at<double>(2, 1) = A.at<double>(2, 1) -18 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A.at<double>(2, 2) = A.at<double>(2, 2) + 18 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		//A.at<double>(2, 3) = A.at<double>(2, 3) -6 * pow(t[ii], 5) * (t[ii] - 1);
+		//A.at<double>(3, 0) = A.at<double>(3, 0) -2 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A.at<double>(3, 1) = A.at<double>(3, 1) + 6 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		//A.at<double>(3, 2) = A.at<double>(3, 2) -6 * pow(t[ii], 5) * (t[ii] - 1);
+		//A.at<double>(3, 3) = A.at<double>(3, 3) + 2 * pow(t[ii], 6);
+		
+		//A[0][0] = A[0][0] + 2 * pow((t[ii] - 1), 6);
+		//A[0][1] = A[0][1] - 6 * t[ii] * pow((t[ii] - 1), 5);
+		//A[0][2] = A[0][2] + 6 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		//A[0][3] = A[0][3] - 2 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A[1][0] = A[1][0] - 6 * t[ii] * pow((t[ii] - 1), 5);
+		//A[1][1] = A[1][1] + 18 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		//A[1][2] = A[1][2] - 18 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A[1][3] = A[1][3] + 6 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		//A[2][0] = A[2][0] + 6 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		//A[2][1] = A[2][1] - 18 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A[2][2] = A[2][2] + 18 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		//A[2][3] = A[2][3] - 6 * pow(t[ii], 5) * (t[ii] - 1);
+		//A[3][0] = A[3][0] - 2 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		//A[3][1] = A[3][1] + 6 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		//A[3][2] = A[3][2] - 6 * pow(t[ii], 5) * (t[ii] - 1);
+		//A[3][3] = A[3][3] + 2 * pow(t[ii], 6);
+
+		A(0, 0) = A(0, 0) + 2 * pow((t[ii] - 1), 6);
+		A(0, 1) = A(0, 1) -6 * t[ii] * pow((t[ii] - 1), 5);
+		A(0, 2) = A(0, 2) + 6 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		A(0, 3) = A(0, 3) -2 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		A(1, 0) = A(1, 0) -6 * t[ii] * pow((t[ii] - 1), 5);
+		A(1, 1) = A(1, 1) + 18 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		A(1, 2) = A(1, 2) -18 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		A(1, 3) = A(1, 3) + 6 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		A(2, 0) = A(2, 0) + 6 * pow(t[ii], 2) * pow((t[ii] - 1), 4);
+		A(2, 1) = A(2, 1) -18 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		A(2, 2) = A(2, 2) + 18 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		A(2, 3) = A(2, 3) -6 * pow(t[ii], 5) * (t[ii] - 1);
+		A(3, 0) = A(3, 0) -2 * pow(t[ii], 3) * pow((t[ii] - 1), 3);
+		A(3, 1) = A(3, 1) + 6 * pow(t[ii], 4) * pow((t[ii] - 1), 2);
+		A(3, 2) = A(3, 2) -6 * pow(t[ii], 5) * (t[ii] - 1);
+		A(3, 3) = A(3, 3) + 2 * pow(t[ii], 6);
+
+		b[0] = b[0] - 2 * data[ii] * pow((t[ii] - 1), 3);
+		b[1] = b[1] + 6 * data[ii] * t[ii] * pow((t[ii] - 1), 2);
+		b[2] = b[2] - 6 * data[ii] * pow(t[ii],2) * (t[ii] - 1);
+		b[3] = b[3] + 2 * data[ii] * pow(t[ii],3) ;
+	}
+
+	Matx44d A_inv = A.inv();
+
+	Vec4d c;
+	for (int ii = 0; ii < 4; ii++) {
+		//c[ii] = A_inv.at<double>(ii, 0)*b[0] + A_inv.at<double>(ii, 1)*b[1] + A_inv.at<double>(ii, 2)*b[2] + A_inv.at<double>(ii, 3)*b[3];
+		//c[ii] = A_inv[ii][0]*b[0] + A_inv[ii][1]*b[1] + A_inv[ii][2]*b[2] + A_inv[ii][3]*b[3];
+		c[ii] = A_inv(ii, 0)*b[0] + A_inv(ii, 1)*b[1] + A_inv(ii, 2)*b[2] + A_inv(ii, 3)*b[3];
+	}
+
+	return c;
+}
+
+
+//void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
+//	smoothPerimeterResults.resize(perimeterResults.size().x, perimeterResults.size().y);
+//	perimeterResults.sortAlongPath();
+//	//printf("Not implemented.\n");
+//	//perimeterResults.copyTo(smoothPerimeterResults);
+//
+//	std::vector<cv::Point> vertices;
+//	vertices.clear();
+//	vertices.push_back(perimeterResults.getPoint(0));
+//	vertices.push_back(perimeterResults.getPoint(1));
+//
+//	for (int ii = 1; ii < perimeterResults.numPoints(); ii++) {
+//		if (vertices.size() > 2) {
+//			while (vertices.size() > 2 &&
+//				FIND_SMOOTH_PERIMETER_isAngleSmallerThan(
+//					Point2d(vertices[vertices.size() - 1].x - vertices[vertices.size() - 2].x,
+//					vertices[vertices.size() - 1].y - vertices[vertices.size() - 2].y),
+//					Point2d(perimeterResults.getPoint(ii).x - vertices[vertices.size() - 1].x,
+//					perimeterResults.getPoint(ii).y - vertices[vertices.size() - 1].y),
+//					45 * 3.14159265 / 180.0)
+//				){
+//				vertices.pop_back();
+//			}
+//			vertices.push_back(perimeterResults.getPoint(ii));
+//		}
+//		else {
+//			vertices.push_back(perimeterResults.getPoint(ii));
+//		}
+//	}
+//	printf("vertices size:%d\n", vertices.size());
+//	smoothPerimeterResults.clear();
+//	for (int ii = 0; ii < vertices.size(); ii++) {
+//		smoothPerimeterResults.addPoint(vertices[ii]);
+//	}
+//}
 
 void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResults, CFIND_Results &smoothPerimeterResults) {
 	smoothPerimeterResults.resize(perimeterResults.size().x, perimeterResults.size().y);
@@ -347,11 +518,11 @@ void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResul
 			while (vertices.size() > 2 &&
 				FIND_SMOOTH_PERIMETER_isAngleSmallerThan(
 					Point2d(vertices[vertices.size() - 1].x - vertices[vertices.size() - 2].x,
-					vertices[vertices.size() - 1].y - vertices[vertices.size() - 2].y),
+						vertices[vertices.size() - 1].y - vertices[vertices.size() - 2].y),
 					Point2d(perimeterResults.getPoint(ii).x - vertices[vertices.size() - 1].x,
-					perimeterResults.getPoint(ii).y - vertices[vertices.size() - 1].y),
+						perimeterResults.getPoint(ii).y - vertices[vertices.size() - 1].y),
 					45 * 3.14159265 / 180.0)
-				){
+				) {
 				vertices.pop_back();
 			}
 			vertices.push_back(perimeterResults.getPoint(ii));
@@ -365,6 +536,30 @@ void CImageProcessingEngine::FIND_SMOOTH_PERIMETER(CFIND_Results &perimeterResul
 	for (int ii = 0; ii < vertices.size(); ii++) {
 		smoothPerimeterResults.addPoint(vertices[ii]);
 	}
+
+	//std::vector<double> tempx;
+	//std::vector<double> tempy;
+	//tempx.clear();
+	//tempy.clear();
+	//for (int ii = 0; ii < 20; ii++) {
+	//	tempx.push_back(perimeterResults.getPoint(ii).x);
+	//	tempy.push_back(perimeterResults.getPoint(ii).y);
+	//}
+
+	//Vec4d cx, cy;
+	//cx = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(tempx);
+	//printf("Cx:%f,%f,%f,%f\n", cx[0], cx[1], cx[2], cx[3]);
+	//cy = FIND_SMOOTH_PERIMETER_cubicBezierCurveFitting(tempy);
+	//printf("Cy:%f,%f,%f,%f\n", cy[0], cy[1], cy[2], cy[3]);
+
+	std::vector<Point2d> temp;
+	temp.clear();
+	for (int ii = 0; ii < 20; ii++) {
+		temp.push_back(perimeterResults.getPoint(ii));
+	}
+	double cost = FIND_SMOOTH_PERIMETER_dataFittingCost(temp);
+	printf("cost:%f\n", cost);
+
 }
 
 void CImageProcessingEngine::DISPLAY_IMAGE(const cv::Mat &image, std::string const &win_name) {
