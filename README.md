@@ -1,4 +1,4 @@
-AE0434 - Exercise
+AE0434 - Exercise Introduction
 -----------------------
 
 ### Part I - Create an image analysis service ###
@@ -28,7 +28,8 @@ Main objective of Part II is to add an addition function to Part I:
 * FIND_SMOOTH_PERIMETER - accepts the outupt of FIND_REGION and outputs a perimeter that has been "smoothed":
 	
 
-
+Submitted solution
+-----------------------
 
 ### 1) Code Description: ###
 
@@ -124,3 +125,17 @@ $ ./view
 	Bug report (fixed): the save command currently cannot save to the filename entered by the user, and will always default to 'output.png'.
 	
 	
+### 3) Test results ###
+
+The following section demonstrates the results of the code.
+
+* Original image: test3.png
+
+![alt text](/demo_results/test3.png?raw=true "title")
+
+* Results of FIND_REGION with (100,100).
+
+* Results of FIND_PERIMETER
+
+* Results of FIND_SMOOTH_PERIMETER.
+
