@@ -1,7 +1,7 @@
 AE0434 - Exercise Introduction
 -----------------------
 
-### Part I - Create an image analysis service ###
+### Part I - Create an image analysis service 
 
 Main objective of Part I of the exercise is to 
 
@@ -21,7 +21,7 @@ and
 	
 2) develop a command-line tool to test these functions.
 
-### Part II - Add additional image analysis service ###
+### Part II - Add additional image analysis service 
 
 Main objective of Part II is to add an addition function to Part I:
 
@@ -31,11 +31,11 @@ Main objective of Part II is to add an addition function to Part I:
 Submitted Solution
 -----------------------
 
-### 1) Code Description: ###
+### 1) Code Description:
 
 Two classes are implemented and are provided in the CImageProcessingEngine.h/.cpp files:
 
-i) Class CFIND_Results
+#### i) Class CFIND_Results
 
 This class implements an object to capture and manipulate the list of pixel coordinates returned from a FIND_ operation.
 The class is implemented using both a 1-D array, and a redundant 2-D matrix for quicker search performance (e.g., for large images).
@@ -48,7 +48,7 @@ to the image size prior to being passed to the FIND_ operation, and cannot be re
 
 
 
-ii) Class CImageProcessingEngine
+#### ii) Class CImageProcessingEngine
 
 This class implements all of the above FIND_ image analysis functions.  The following describes the algorithms behind the functions.
 
@@ -103,7 +103,7 @@ This class implements all of the above FIND_ image analysis functions.  The foll
 
 
 
-### 2) Command-line tool ###
+### 2) Command-line tool
 
 The command-line tool is implemented in viewtester.cpp.  
 
@@ -129,7 +129,7 @@ $ ./view
 	Bug report (fixed): the save command currently cannot save to the filename entered by the user, and will always default to 'output.png'.
 	
 	
-### 3) Test results ###
+### 3) Test results
 
 The following section demonstrates the results of the code.
 
@@ -147,22 +147,16 @@ The following section demonstrates the results of the code.
 
 * Results of FIND_SMOOTH_PERIMETER
 
-	- Removed small artifacts:
-	
-	![alt text](/demo_results/test3_smooth_clean.png?raw=true) ![alt text](/demo_results/test3_smooth_perimeter.png?raw=true)
-
-	Note: there are still some noticeable small pixels not cleaned.  Bug report: need to either tweak threshold, or an alternative cleaning method.
-	
+	- Removed small artifacts
 	- Found perimeter:
-	
-	![alt text](/demo_results/test3_smooth_perimeter.png?raw=true)
-	
 	- Found convex hull:
-	
-	![alt text](/demo_results/test3_smooth_convex_hull.png?raw=true)
-
 	- Curve fitting:
 	
-	![alt text](/demo_results/test3_smooth_spline.png?raw=true)
+	![alt text](/demo_results/test3_smooth_clean.png?raw=true) ![alt text](/demo_results/test3_smooth_perimeter.png?raw=true)![alt text](/demo_results/test3_smooth_convex_hull.png?raw=true)![alt text](/demo_results/test3_smooth_spline.png?raw=true)
 
+	
+	Note: there are still some noticeable small pixels not cleaned.  Bug report: need to either tweak threshold, or an alternative cleaning method.
+	
+	
+	
 	
