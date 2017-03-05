@@ -149,7 +149,7 @@ The following section demonstrates the results of the code.
 
 	- Removed small artifacts:
 	
-	![alt text](/demo_results/test3_smooth_clean.png?raw=true)
+	![alt text](/demo_results/test3_smooth_clean.png?raw=true) ![alt text](/demo_results/test3_smooth_perimeter.png?raw=true)
 
 	Note: there are still some noticeable small pixels not cleaned.  Bug report: need to either tweak threshold, or an alternative cleaning method.
 	
