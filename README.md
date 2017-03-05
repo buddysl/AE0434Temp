@@ -143,7 +143,7 @@ The following section demonstrates the results of the code.
 
 * Results of FIND_SMOOTH_PERIMETER
 
-	| |Removed small artifacts |![alt text](/demo_results/test3_smooth_clean.png?raw=true)| |
+	|Removed small artifacts |![alt text](/demo_results/test3_smooth_clean.png?raw=true)|
 
 	- Removed small artifacts:
 	
